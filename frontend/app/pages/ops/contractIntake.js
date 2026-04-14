@@ -408,7 +408,6 @@ export default {
           <div class="actions">
             <button class="secondary" id="copy-dummy-id">复制合同号</button>
             <button id="goto-tracking">进入合同进度追踪</button>
-            <button class="secondary" id="goto-archive">进入历史合同档案库</button>
           </div>
         </div>
       </div>
@@ -419,8 +418,6 @@ export default {
       if (copyBtn) copyBtn.onclick = async () => navigator.clipboard?.writeText(res.contract_case_id);
       const goTrack = document.getElementById("goto-tracking");
       if (goTrack) goTrack.onclick = () => (location.hash = `/ops/contracts/tracking?q=${encodeURIComponent(res.contract_case_id)}`);
-      const goArchive = document.getElementById("goto-archive");
-      if (goArchive) goArchive.onclick = () => (location.hash = `/ops/contracts/archive?q=${encodeURIComponent(res.contract_case_id)}`);
     };
 
     const renderSe3Table = (rows) =>
