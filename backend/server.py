@@ -25,6 +25,9 @@ CSV_FILES = {
     "planning_records": DATA_DIR / "planning_records.csv",
     "adjustment_records": DATA_DIR / "adjustment_records.csv",
     "dashboard_summary_cards": DATA_DIR / "dashboard_summary_cards.csv",
+    "se3_snapshots": DATA_DIR / "se3_snapshots.csv",
+    "pms_projects": DATA_DIR / "pms_projects.csv",
+    "contract_archive_versions": DATA_DIR / "contract_archive_versions.csv",
 }
 
 
@@ -53,6 +56,26 @@ def append_csv_row(path: Path, row: dict[str, str]) -> None:
     updated_rows = [*current_rows, normalized_row]
 
     write_csv_atomic(path, updated_rows, fieldnames)
+
+
+def contains(haystack: str, needle: str) -> bool:
+    return needle.lower() in (haystack or "").lower()
+
+
+def status_bucket(raw: str) -> str:
+    mapping = {
+        "submitted": "submitted_in_review",
+        "cm_in_review": "submitted_in_review",
+        "submitted_in_review": "submitted_in_review",
+        "pending_cm_confirm": "pending_cm_confirm",
+        "ca_pending_signature": "pending_ca_sign",
+        "pending_ca_sign": "pending_ca_sign",
+        "pending_cm_send": "pending_cm_send",
+        "pending_cm_archive": "pending_cm_archive",
+        "execution_closed": "completed",
+        "completed": "completed",
+    }
+    return mapping.get(raw, raw or "submitted_in_review")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -84,11 +107,14 @@ class Handler(BaseHTTPRequestHandler):
             content_type = "text/css; charset=utf-8"
         elif target.suffix == ".js":
             content_type = "application/javascript; charset=utf-8"
+        elif target.suffix == ".pdf":
+            content_type = "application/pdf"
 
         raw = target.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(raw)
 
@@ -114,9 +140,74 @@ class Handler(BaseHTTPRequestHandler):
             cards = [r for r in rows if r["workspace_code"] == workspace and r["role_code"] == role]
             return self._send_json(200, cards)
 
+        if path == "/api/ops/am/status-counts":
+            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            out = {
+                "submitted_in_review": 0,
+                "pending_cm_confirm": 0,
+                "pending_ca_sign": 0,
+                "pending_cm_send": 0,
+                "pending_cm_archive": 0,
+                "completed": 0,
+            }
+            for row in rows:
+                key = status_bucket(row.get("execution_status", ""))
+                if key in out:
+                    out[key] += 1
+            return self._send_json(200, out)
+
+        if path == "/api/ops/se3-snapshots":
+            rows = read_csv_dicts(CSV_FILES["se3_snapshots"])
+            pid = query.get("pid", [""])[0].strip()
+            customer_name = query.get("customer_name", [""])[0].strip()
+            product_name = query.get("product_name", [""])[0].strip()
+            if pid:
+                rows = [r for r in rows if contains(r.get("pid", ""), pid)]
+            if customer_name:
+                rows = [r for r in rows if contains(r.get("customer_name", ""), customer_name)]
+            if product_name:
+                rows = [r for r in rows if contains(r.get("product_name", ""), product_name)]
+            return self._send_json(200, rows)
+
+        if path == "/api/ops/pms-projects":
+            rows = read_csv_dicts(CSV_FILES["pms_projects"])
+            mcr = query.get("mcr", [""])[0].strip()
+            project_name = query.get("project_name", [""])[0].strip()
+            customer_name = query.get("customer_name", [""])[0].strip()
+            product_name = query.get("product_name", [""])[0].strip()
+            if mcr:
+                rows = [r for r in rows if contains(r.get("related_mcrl0", ""), mcr)]
+            if project_name:
+                rows = [r for r in rows if contains(r.get("project_name", ""), project_name)]
+            if customer_name:
+                rows = [r for r in rows if contains(r.get("customer_name", ""), customer_name)]
+            if product_name:
+                rows = [r for r in rows if contains(r.get("product_name", ""), product_name)]
+            return self._send_json(200, rows)
+
         if path == "/api/ops/contracts/tracking":
             rows = read_csv_dicts(CSV_FILES["contract_cases"])
-            return self._send_json(200, rows)
+            status = query.get("status", [""])[0].strip()
+            dummy_id = query.get("dummy_id", [""])[0].strip()
+            formal_id = query.get("formal_id", [""])[0].strip()
+            customer_name = query.get("customer_name", [""])[0].strip()
+            project_name = query.get("project_name", [""])[0].strip()
+
+            def match(row: dict[str, str]) -> bool:
+                if status and status_bucket(row.get("execution_status", "")) != status:
+                    return False
+                if dummy_id and not contains(row.get("contract_case_id", ""), dummy_id):
+                    return False
+                if formal_id and not contains(row.get("formal_contract_id", ""), formal_id):
+                    return False
+                if customer_name and not contains(row.get("customer_name", ""), customer_name):
+                    return False
+                if project_name and not contains(row.get("project_name", ""), project_name):
+                    return False
+                return True
+
+            filtered = [r for r in rows if match(r)]
+            return self._send_json(200, filtered)
 
         if path == "/api/ops/contracts/review-queue":
             rows = read_csv_dicts(CSV_FILES["contract_cases"])
@@ -125,8 +216,34 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/ops/contracts/archive":
             rows = read_csv_dicts(CSV_FILES["contract_cases"])
-            archived = [r for r in rows if r["archive_status"] == "archived_indexed"]
-            return self._send_json(200, archived)
+            dummy_id = query.get("dummy_id", [""])[0].strip()
+            formal_id = query.get("formal_id", [""])[0].strip()
+            customer_name = query.get("customer_name", [""])[0].strip()
+            product_name = query.get("product_name", [""])[0].strip()
+            contract_name = query.get("contract_name", [""])[0].strip()
+
+            def match_archive(row: dict[str, str]) -> bool:
+                if row.get("archive_status") != "archived_indexed":
+                    return False
+                if dummy_id and not contains(row.get("contract_case_id", ""), dummy_id):
+                    return False
+                if formal_id and not contains(row.get("formal_contract_id", ""), formal_id):
+                    return False
+                if customer_name and not contains(row.get("customer_name", ""), customer_name):
+                    return False
+                if product_name and not contains(row.get("product_name", ""), product_name):
+                    return False
+                if contract_name and not contains(row.get("contract_name", ""), contract_name):
+                    return False
+                return True
+
+            return self._send_json(200, [r for r in rows if match_archive(r)])
+
+        if path == "/api/ops/contracts/archive/versions":
+            contract_case_id = query.get("contract_case_id", [""])[0].strip()
+            rows = read_csv_dicts(CSV_FILES["contract_archive_versions"])
+            out = [r for r in rows if r.get("contract_case_id") == contract_case_id]
+            return self._send_json(200, out)
 
         if path == "/api/ops/billing/records":
             return self._send_json(200, read_csv_dicts(CSV_FILES["billing_events"]))
@@ -179,18 +296,43 @@ class Handler(BaseHTTPRequestHandler):
         payload = self._read_json()
 
         if path == "/api/ops/contracts/intake":
-            now = datetime.utcnow().isoformat(timespec="seconds")
-            contract_id = payload.get("contract_case_id", f"CC-{now.replace(':', '').replace('-', '')}")
+            now = datetime.utcnow()
+            ts = now.strftime("%Y%m%d-%H%M%S")
+            contract_id = payload.get("contract_case_id", f"DMY-{ts}")
+            extracted = payload.get("extracted_fields", {})
+            se3_matches = payload.get("se3_matches", [])
+            pms_matches = payload.get("pms_matches", [])
+            allocations = payload.get("allocations", {})
+
+            flow_chain = "AM提交 -> CM校验 -> CA签字 -> CM寄送 -> CM归档"
             new_case = {
                 "contract_case_id": contract_id,
                 "contract_code": payload.get("contract_code", contract_id),
-                "customer_name": payload.get("customer_name", "TBD Customer"),
+                "formal_contract_id": payload.get("formal_contract_id", ""),
+                "contract_type": payload.get("contract_type", "OTP"),
+                "customer_contract_no": extracted.get("customer_contract_no", ""),
+                "customer_name": extracted.get("customer_name", "TBD Customer"),
+                "project_name": extracted.get("project_name", ""),
+                "product_name": extracted.get("product_name", ""),
+                "contract_name": extracted.get("contract_name", ""),
+                "total_amount": str(extracted.get("total_amount", "0")),
+                "payment_terms": extracted.get("payment_terms", ""),
+                "uploaded_file_name": payload.get("uploaded_file_name", ""),
+                "se3_summary": ", ".join([x.get("pid", "") for x in se3_matches]),
+                "pms_summary": ", ".join([x.get("project_name", "") for x in pms_matches]),
+                "extract_summary": f"{extracted.get('customer_name', '')}/{extracted.get('project_name', '')}/{extracted.get('product_name', '')}",
+                "allocation_summary": json.dumps(allocations, ensure_ascii=False),
                 "am_owner_id": payload.get("am_owner_id", "U-AM-001"),
                 "cm_owner_id": payload.get("cm_owner_id", "U-CM-001"),
-                "execution_status": "submitted",
+                "execution_status": "submitted_in_review",
                 "archive_status": "not_archived",
                 "current_owner_role": "CM",
-                "next_step_label": "CM review completeness",
+                "next_step_label": "CM completeness confirm",
+                "flow_chain": flow_chain,
+                "current_step": "CM 校验",
+                "next_step": "CA 签字",
+                "created_at": now.isoformat(timespec="seconds"),
+                "updated_at": now.isoformat(timespec="seconds"),
             }
             append_csv_row(CSV_FILES["contract_cases"], new_case)
             append_csv_row(
@@ -199,12 +341,19 @@ class Handler(BaseHTTPRequestHandler):
                     "event_id": f"EV-{contract_id}",
                     "contract_case_id": contract_id,
                     "event_type": "submitted",
-                    "event_status": "submitted",
-                    "event_time": now,
+                    "event_status": "submitted_in_review",
+                    "event_time": now.isoformat(timespec="seconds"),
                     "actor_role": payload.get("actor_role", "AM"),
                 },
             )
-            return self._send_json(201, {"ok": True, "contract_case_id": contract_id})
+            return self._send_json(
+                201,
+                {
+                    "ok": True,
+                    "contract_case_id": contract_id,
+                    "flow_chain": ["CM 校验", "CA 签字", "CM 寄送合同", "CM 归档合同"],
+                },
+            )
 
         if path == "/api/ops/billing/execution":
             now = datetime.utcnow().isoformat(timespec="seconds")

@@ -3,8 +3,10 @@ import { renderIdentity } from "./shared/ui.js";
 import { currentRole, currentWorkspace, roles, state, workspaces } from "./shared/state.js";
 import { routes } from "./routes.js";
 
-function getPath() {
-  return location.hash.replace(/^#/, "") || getDefaultPath();
+function parseHash() {
+  const raw = location.hash.replace(/^#/, "") || getDefaultPath();
+  const [path, queryString = ""] = raw.split("?");
+  return { path, query: new URLSearchParams(queryString) };
 }
 
 function getDefaultPath() {
@@ -54,7 +56,7 @@ function renderSwitchers() {
 
 function renderSideNav() {
   const nav = document.getElementById("side-nav");
-  const current = getPath();
+  const { path: current } = parseHash();
   nav.innerHTML = availableRoutes()
     .map((r) => `<button class="nav-link ${r.path === current ? "active" : ""}" data-path="${r.path}">${r.nav}</button>`)
     .join("");
@@ -68,7 +70,7 @@ function renderSideNav() {
 }
 
 async function renderPage() {
-  const path = getPath();
+  const { path, query } = parseHash();
   const route = availableRoutes().find((r) => r.path === path);
   if (!route) {
     location.hash = getDefaultPath();
@@ -80,12 +82,12 @@ async function renderPage() {
   const identity = document.getElementById("page-identity");
   identity.innerHTML = renderIdentity(page, currentRole().label, currentWorkspace().label);
 
-  const html = await page.render({ state, fetchJson });
+  const html = await page.render({ state, fetchJson, query, route });
   const content = document.getElementById("page-content");
   content.innerHTML = html;
 
   if (page.bind) {
-    page.bind({ state, fetchJson });
+    page.bind({ state, fetchJson, query, route });
   }
 }
 

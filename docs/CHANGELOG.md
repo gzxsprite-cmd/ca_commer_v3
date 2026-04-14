@@ -38,3 +38,10 @@
 ## 2026-04-14 — Runtime Wiring Hotfix After Page Split
 - Fixed frontend boot failure by loading `/app/main.js` as an ES module in `frontend/index.html` (`type="module"`).
 - This restores workspace selector, role selector, task navigation, and initial page render wiring.
+
+## 2026-04-14 — AM Operations Scoped Loop (Home/Intake/Tracking/Archive)
+- AM 首页新增六类流转状态卡片与联动跳转（点击后带状态筛选进入合同进度追踪）。
+- 合同登记与申请页完成 OTP 四步深度流程：提取确认、SE3/PMS 匹配、金额分配、提交成功反馈（含 dummy 合同号与完整流转链）。
+- 合同进度追踪页改为筛选 + 列表 + 详情结构，支持 dummy/formal/customer/project/status 过滤与详情展示。
+- 历史合同档案库改为画廊 + 详情模式，支持多维检索、版本切换（草拟/单签/双签）、在线 iframe 预览与下载。
+- 后端扩展 AM 流程相关 API 与 CSV：状态计数、SE3/PMS 候选查询、追踪筛选、档案版本查询；并补充示例档案 PDF 资源。
