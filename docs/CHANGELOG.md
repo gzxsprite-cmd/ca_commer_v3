@@ -34,3 +34,7 @@
 - Kept only shell/state/ui/api primitives shared and retained lightweight shared route registration.
 - Updated backend static-file serving to support modular frontend imports (`/app/...`).
 - Updated coding and boundary docs to make page-level isolation a hard rule for future iterations.
+
+## 2026-04-14 — Runtime Wiring Hotfix After Page Split
+- Fixed frontend boot failure by loading `/app/main.js` as an ES module in `frontend/index.html` (`type="module"`).
+- This restores workspace selector, role selector, task navigation, and initial page render wiring.
