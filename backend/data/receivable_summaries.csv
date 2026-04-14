@@ -1,0 +1,4 @@
+summary_id,owner_scope_type,owner_scope_id,outstanding_amount,receivable_status
+RS-001,role,AM,140000,outstanding
+RS-002,role,CM,140000,outstanding
+RS-003,role,CA,140000,overdue_risk
