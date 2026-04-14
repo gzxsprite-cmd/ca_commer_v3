@@ -17,3 +17,7 @@
 - Added safe CSV write pattern in service updates (read current file, build updated rows, write temp file, atomic replace).
 - Updated docs to remove PjM from current role scope and align Stage-1 to CSV-backed transitional architecture with Python service read/write.
 - Updated README with runnable Stage-1 local run instructions.
+
+## 2026-04-14 — Local Run Documentation Added
+- Added `docs/RUN_LOCAL.md` with Stage-1 local startup instructions, quick start, prerequisites, URLs, CSV location, read/write behavior, and troubleshooting.
+- Updated `README.md` with a concise Quick Start and link to local run guide.

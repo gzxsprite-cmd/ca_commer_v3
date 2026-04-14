@@ -25,6 +25,15 @@ Current product roles in scope:
 - CSV-backed data layer
 - Lightweight Python service for local read/write APIs
 
+## Quick Start (Local)
+```bash
+python3 backend/server.py
+```
+Open: `http://127.0.0.1:8010`
+
+## How to Run Locally
+See detailed instructions in: **`docs/RUN_LOCAL.md`**
+
 ## Recommended Reading Order
 1. `docs/PROJECT_SETUP.md`
 2. `docs/PLATFORM_ARCHITECTURE_BASELINE.md`
@@ -36,12 +45,6 @@ Current product roles in scope:
 8. `docs/CODING_CONSTITUTION.md`
 9. `docs/DOC_UPDATE_RULES.md`
 10. `docs/CHANGELOG.md`
-
-## Local Run
-```bash
-python3 backend/server.py
-```
-Open: `http://127.0.0.1:8010`
 
 ## Scope Notes
 Intentionally deferred:
