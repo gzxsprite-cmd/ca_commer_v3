@@ -58,6 +58,7 @@ function renderSideNav() {
   const nav = document.getElementById("side-nav");
   const { path: current } = parseHash();
   nav.innerHTML = availableRoutes()
+    .filter((r) => !r.hiddenNav)
     .map((r) => `<button class="nav-link ${r.path === current ? "active" : ""}" data-path="${r.path}">${r.nav}</button>`)
     .join("");
 

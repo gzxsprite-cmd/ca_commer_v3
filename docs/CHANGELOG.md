@@ -63,3 +63,8 @@
 - List page now focuses on compact real filtering and summary columns with explicit 查看详情 action.
 - Detail page now carries full lifecycle, base contract info, matching lists, allocation summary, and file area placeholders.
 - Added minimal backend detail endpoint for exact contract event lookup.
+
+## 2026-04-14 — Ops AM Navigation Cleanup (Tracking Detail Hidden + Archive Removed)
+- Hid `合同进度详情` from visible sidebar navigation while keeping it as a child route entered from tracking list `查看详情`.
+- Removed standalone `合同归档与详情` route and page implementation to eliminate redundant detail surface.
+- Kept 合同进度追踪 list -> detail flow as the single detail path.
