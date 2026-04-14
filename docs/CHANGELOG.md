@@ -57,3 +57,9 @@
 - Kept extracted fields editable in demo path and wired Step 2 candidate loading through existing CSV-backed APIs.
 - Refined Step 2 into unified selectable lists (SE3 / PMS), removing duplicate selected-summary blocks.
 - Added minimal CSV-backed Tesla+IPB dummy candidates for SE3 snapshots and PMS projects to avoid empty Step 2 in demo path.
+
+## 2026-04-14 — Contract Tracking Split Refactor (List Page + Detail Page)
+- Refactored 合同进度追踪 from mixed list+side-detail into two isolated pages/routes: summary list page and standalone detail page.
+- List page now focuses on compact real filtering and summary columns with explicit 查看详情 action.
+- Detail page now carries full lifecycle, base contract info, matching lists, allocation summary, and file area placeholders.
+- Added minimal backend detail endpoint for exact contract event lookup.

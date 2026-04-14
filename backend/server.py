@@ -215,6 +215,12 @@ class Handler(BaseHTTPRequestHandler):
             filtered = [r for r in rows if match(r)]
             return self._send_json(200, filtered)
 
+        if path == "/api/ops/contracts/tracking/detail":
+            contract_case_id = query.get("contract_case_id", [""])[0].strip()
+            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            target = next((r for r in rows if r.get("contract_case_id") == contract_case_id), {})
+            return self._send_json(200, target)
+
         if path == "/api/ops/contracts/review-queue":
             rows = read_csv_dicts(CSV_FILES["contract_cases"])
             queue = [r for r in rows if r["execution_status"] in {"cm_in_review", "ca_pending_signature"}]
