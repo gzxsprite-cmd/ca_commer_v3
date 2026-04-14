@@ -188,6 +188,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/ops/contracts/tracking":
             rows = read_csv_dicts(CSV_FILES["contract_cases"])
             status = query.get("status", [""])[0].strip()
+            keyword = query.get("q", [""])[0].strip()
             dummy_id = query.get("dummy_id", [""])[0].strip()
             formal_id = query.get("formal_id", [""])[0].strip()
             customer_name = query.get("customer_name", [""])[0].strip()
@@ -195,6 +196,11 @@ class Handler(BaseHTTPRequestHandler):
 
             def match(row: dict[str, str]) -> bool:
                 if status and status_bucket(row.get("execution_status", "")) != status:
+                    return False
+                if keyword and not any(
+                    contains(row.get(k, ""), keyword)
+                    for k in ("contract_case_id", "formal_contract_id", "contract_code", "customer_name", "project_name")
+                ):
                     return False
                 if dummy_id and not contains(row.get("contract_case_id", ""), dummy_id):
                     return False
@@ -216,6 +222,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/ops/contracts/archive":
             rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            keyword = query.get("q", [""])[0].strip()
             dummy_id = query.get("dummy_id", [""])[0].strip()
             formal_id = query.get("formal_id", [""])[0].strip()
             customer_name = query.get("customer_name", [""])[0].strip()
@@ -224,6 +231,11 @@ class Handler(BaseHTTPRequestHandler):
 
             def match_archive(row: dict[str, str]) -> bool:
                 if row.get("archive_status") != "archived_indexed":
+                    return False
+                if keyword and not any(
+                    contains(row.get(k, ""), keyword)
+                    for k in ("contract_case_id", "formal_contract_id", "contract_name", "customer_name")
+                ):
                     return False
                 if dummy_id and not contains(row.get("contract_case_id", ""), dummy_id):
                     return False

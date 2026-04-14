@@ -45,3 +45,9 @@
 - 合同进度追踪页改为筛选 + 列表 + 详情结构，支持 dummy/formal/customer/project/status 过滤与详情展示。
 - 历史合同档案库改为画廊 + 详情模式，支持多维检索、版本切换（草拟/单签/双签）、在线 iframe 预览与下载。
 - 后端扩展 AM 流程相关 API 与 CSV：状态计数、SE3/PMS 候选查询、追踪筛选、档案版本查询；并补充示例档案 PDF 资源。
+
+## 2026-04-14 — AM Pages Usability / IA Refactor (Intake, Tracking, Archive)
+- Refactored 合同登记与申请 to stronger business layout: wider Step1 preview, stacked Step2 matching sections, card-based Step3 allocation with payment-node split view, full Step4 confirmation overview, and improved success confirmation hierarchy.
+- Refactored 合同进度追踪 to compact real filter bar (keyword + status), complete business columns, concise one-to-many mapping display, and richer right-side detail context.
+- Refactored 历史合同档案库 to compact search bar + left gallery + large right preview panel, with clear version switching and download placement.
+- Added backend keyword filtering support (`q`) for tracking/archive queries while keeping CSV-backed architecture.
