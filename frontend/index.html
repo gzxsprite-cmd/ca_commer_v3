@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CA_Commer 商务协作平台（Stage-1）</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="workspace-shell">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="logo">CA</div>
+          <div>
+            <div class="platform-title">CA 商务协作平台</div>
+            <div class="platform-subtitle">合同执行与计划复盘工作台</div>
+          </div>
+        </div>
+        <div class="topbar-right" id="global-context"></div>
+      </header>
+
+      <div class="shell-main">
+        <aside class="sidebar">
+          <section class="side-block">
+            <h3>工作上下文</h3>
+            <label>当前工作空间</label>
+            <select id="workspace-switcher"></select>
+            <label>当前角色</label>
+            <select id="role-switcher"></select>
+          </section>
+
+          <section class="side-block">
+            <h3>任务导航</h3>
+            <nav id="side-nav" class="side-nav"></nav>
+          </section>
+        </aside>
+
+        <main class="content-area">
+          <section id="page-identity" class="page-identity"></section>
+          <section id="page-content" class="page-content"></section>
+        </main>
+      </div>
+    </div>
+
+    <script src="/app/main.js"></script>
+  </body>
+</html>
