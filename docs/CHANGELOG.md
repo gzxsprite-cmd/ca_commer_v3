@@ -51,3 +51,9 @@
 - Refactored 合同进度追踪 to compact real filter bar (keyword + status), complete business columns, concise one-to-many mapping display, and richer right-side detail context.
 - Refactored 历史合同档案库 to compact search bar + left gallery + large right preview panel, with clear version switching and download placement.
 - Added backend keyword filtering support (`q`) for tracking/archive queries while keeping CSV-backed architecture.
+
+## 2026-04-14 — Intake Step1/2 Demo-Entry Refinement (Tesla+IPB)
+- Added a temporary secondary demo entry in Step 1: `载入演示案例（Tesla + IPB）`, while keeping normal upload/extract flow unchanged.
+- Kept extracted fields editable in demo path and wired Step 2 candidate loading through existing CSV-backed APIs.
+- Refined Step 2 into unified selectable lists (SE3 / PMS), removing duplicate selected-summary blocks.
+- Added minimal CSV-backed Tesla+IPB dummy candidates for SE3 snapshots and PMS projects to avoid empty Step 2 in demo path.

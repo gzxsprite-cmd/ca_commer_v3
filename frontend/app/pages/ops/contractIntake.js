@@ -16,6 +16,18 @@ function fakeExtract(fileName) {
   };
 }
 
+function demoExtractTeslaIpb() {
+  return {
+    customer_contract_no: "TESLA-IPB-DEMO-001",
+    customer_name: "Tesla",
+    project_name: "Tesla IPB Integration",
+    product_name: "IPB",
+    contract_name: "Tesla IPB Demo Contract",
+    total_amount: 180000,
+    payment_terms: "SOD-30%;PPAP-40%;SOP-30%",
+  };
+}
+
 function parseNumber(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -130,6 +142,7 @@ export default {
             <div class="actions">
               <button id="extract-btn">提取合同内容</button>
               <button class="secondary" id="confirm-extract-btn" ${state.extracted ? "" : "disabled"}>确认提取并进入下一步</button>
+              <button class="secondary" id="load-demo-case-btn">载入演示案例（Tesla + IPB）</button>
             </div>
             <div class="empty-note" id="extract-msg">流程：上传 → 提取 → 人工复核后确认。</div>
           </section>
@@ -154,6 +167,13 @@ export default {
         state.extracted = fakeExtract(file.name);
         renderStep1();
       };
+      document.getElementById("load-demo-case-btn").onclick = () => {
+        state.contract_type = "OTP";
+        state.upload_file_name = "demo_tesla_ipb_contract.pdf";
+        state.extracted = demoExtractTeslaIpb();
+        document.getElementById("extract-msg").textContent = "已载入演示案例：Tesla + IPB。你仍可编辑所有提取字段后继续。";
+        renderStep1();
+      };
       const btn = document.getElementById("confirm-extract-btn");
       if (btn) {
         btn.onclick = async () => {
@@ -171,13 +191,6 @@ export default {
       }
     };
 
-    const renderSelectedSummary = (rows, key, field) =>
-      rows.length
-        ? `<div class="selected-chip-line">${rows
-            .map((x) => `<span class="badge status-info">${safeText(x[field] || x[key])}</span>`)
-            .join(" ")}</div>`
-        : '<div class="empty-note">尚未选择</div>';
-
     const renderStep2 = () => {
       root.innerHTML = `
         <div class="focus-panel"><h3>SE3 报价单匹配</h3>
@@ -185,10 +198,8 @@ export default {
             <input id="se3-pid-search" placeholder="按 PID 搜索并加入候选" />
             <button class="secondary" id="se3-search-btn">搜索加入</button>
           </div>
-          <h4>推荐候选</h4>
+          <h4>候选列表（统一勾选）</h4>
           ${renderSe3Table(allSe3Candidates())}
-          <h4>已选 SE3</h4>
-          ${renderSelectedSummary(selectedSe3Rows(), "snapshot_id", "pid")}
         </div>
 
         <div class="focus-panel" style="margin-top:12px;"><h3>PMS 项目匹配</h3>
@@ -197,10 +208,8 @@ export default {
             <input id="pms-name-search" placeholder="按项目名搜索" />
             <button class="secondary" id="pms-search-btn">搜索加入</button>
           </div>
-          <h4>推荐候选</h4>
+          <h4>候选列表（统一勾选）</h4>
           ${renderPmsTable(allPmsCandidates())}
-          <h4>已选 PMS</h4>
-          ${renderSelectedSummary(selectedPmsRows(), "project_id", "project_name")}
         </div>
 
         <div class="actions">
