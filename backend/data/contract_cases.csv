@@ -1,0 +1,4 @@
+contract_case_id,contract_code,customer_name,am_owner_id,cm_owner_id,execution_status,archive_status,current_owner_role,next_step_label
+CC-001,C-2026-001,Northwind,U-AM-001,U-CM-001,ca_pending_signature,not_archived,CA,CA signature
+CC-002,C-2026-002,Contoso,U-AM-001,U-CM-001,cm_in_review,not_archived,CM,CM compliance check
+CC-003,C-2026-003,Fabrikam,U-AM-001,U-CM-001,execution_closed,archived_indexed,CM,Reference only
