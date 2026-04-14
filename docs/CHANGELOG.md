@@ -27,3 +27,10 @@
 - Completed Chinese-first wording pass for navigation, page titles, actions, helper text, status/table language.
 - Applied task-first page grammar across representative home/list/form/review/detail page types.
 - Added `docs/UI_REFACTOR_GUIDELINES_STAGE1.md` and updated UI/style grammar docs for reusable platform-wide guidance.
+
+## 2026-04-14 — Frontend Page Isolation Refactor
+- Refactored frontend from monolithic `frontend/app.js` to page-isolated module structure under `frontend/app/`.
+- Split each concrete page into its own module file for Ops and Plan workspaces (home/list/form/review/detail pages).
+- Kept only shell/state/ui/api primitives shared and retained lightweight shared route registration.
+- Updated backend static-file serving to support modular frontend imports (`/app/...`).
+- Updated coding and boundary docs to make page-level isolation a hard rule for future iterations.

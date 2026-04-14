@@ -164,9 +164,11 @@ class Handler(BaseHTTPRequestHandler):
             ]
             return self._send_json(200, cards)
 
-        if path in {"/", "/index.html"}:
+        if path == "/":
             return self._send_static("index.html")
-        if path in {"/app.js", "/styles.css"}:
+
+        static_candidate = (FRONTEND_DIR / path.lstrip("/")).resolve()
+        if str(static_candidate).startswith(str(FRONTEND_DIR.resolve())) and static_candidate.exists() and static_candidate.is_file():
             return self._send_static(path.lstrip("/"))
 
         self.send_error(404, "Not found")
