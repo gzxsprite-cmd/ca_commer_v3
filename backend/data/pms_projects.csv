@@ -1,0 +1,7 @@
+project_id,project_name,system_project_type,project_status,related_pid,related_mcrl0,pjm_owner,remark_from_pjm,customer_name,product_name
+PMS-001,Alpha-PMS,Vehicle,In Progress,PID-8871,MCRL0-101,Alice,优先保障SOP里程碑,Northwind,Brake ECU
+PMS-002,Beta-PMS,Vehicle,In Progress,PID-8872,MCRL0-102,Bob,客户对交付节奏要求高,Contoso,Smart Sensor
+PMS-003,Gamma-PMS,Platform,Planning,PID-8873,MCRL0-103,Carol,需要关注成本边界,Fabrikam,Domain Controller
+PMS-004,Delta-PMS,Vehicle,In Progress,PID-8874,MCRL0-104,David,已确认需求基线,Adventure Works,Cockpit Unit
+PMS-005,Epsilon-PMS,Platform,In Progress,PID-8875,MCRL0-105,Eve,建议预留buffer,Tailspin,ADAS Camera
+PMS-006,Zeta-PMS,Vehicle,On Track,PID-8876,MCRL0-106,Frank,签署后立即进入执行,Litware,Battery Monitor
