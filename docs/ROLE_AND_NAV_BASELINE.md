@@ -2,20 +2,19 @@
 
 ## Baseline Roles
 - **AM**
-- **PjM**
 - **CM**
 - **SCP**
 - **CA**
 
-Role definitions remain baseline-level in Stage-0; detailed responsibilities and field-level actions are intentionally deferred.
+Current-stage product role scope includes only the four roles above. Project-side information can be referenced as supporting context, but is not modeled as a primary product role in Stage-1.
 
 ## Workspace Primary / Secondary Role Orientation
 ### Daily Execution Workspace
 - Primary: **AM, CM, CA**
-- Secondary: **PjM, SCP**
+- Secondary: **SCP**
 
 ### Tracking & Planning Workspace
-- Primary: **SCP, CA, PjM**
+- Primary: **SCP, CA**
 - Secondary: **AM, CM**
 
 This is a navigation and emphasis baseline, not a final permission matrix.

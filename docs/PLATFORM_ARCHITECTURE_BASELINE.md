@@ -1,7 +1,7 @@
 # PLATFORM_ARCHITECTURE_BASELINE
 
 ## Baseline Intent
-Define only the **high-level platform skeleton** for a Pages demo. This baseline is intentionally lightweight and extensible.
+Define only the **high-level platform skeleton** for a Pages demo evolving into a lightweight runnable Stage-1 structure.
 
 ## High-Level Skeleton
 - **Shared Shell (global frame)**
@@ -28,30 +28,30 @@ Shared shell is mandatory for all pages:
 Covers operational flow context such as:
 - contract and billing-related execution
 - initiation, approval/signature, archive, and follow-up touchpoints
-No final field or workflow detail is frozen at Stage-0.
+No final field or workflow detail is frozen at this stage.
 
 ## Tracking & Planning Workspace (Baseline)
 Covers planning and management context such as:
 - planning and adjustment
 - SCP-oriented analysis
 - CA management review
-No final analytics model is frozen at Stage-0.
+No final analytics model is frozen at this stage.
 
 ## Role-Oriented Entry Design
 - Each role has a role home as first entry point.
 - Role home links to relevant workspace tasks and lists.
 - Workspace home provides cross-role operational view, but role-home remains the personal operational anchor.
 
-## Data Modeling in Demo Stage
-Use lightweight base modeling for demo:
-- csv files and/or mock JSON data
+## Data Modeling in Stage-1
+Use lightweight but real baseline data modeling:
+- CSV files as the source-of-truth data model
 - stable identifiers and simple status labels
-- data structures kept minimal and evolvable
+- Python lightweight local service layer for CSV read/write
 
-## Path to Full-Stack Application
-Stage-0 → later stages:
-1. Pages demo with mock/csv data
-2. modular frontend with reusable components
-3. Python-friendly backend service integration
-4. progressive replacement of mock data with real services
+## Transitional Path to Full Application
+This stage is a transition between pure pages demo and future full application:
+1. shared shell + skeleton routes/pages
+2. CSV-backed local service read/write loop
+3. modular frontend and service hardening
+4. progressive replacement of CSV/service internals by production-ready stack
 Maintain page contracts as stable as possible during migration.

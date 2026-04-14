@@ -4,6 +4,10 @@
 Define **baseline** role stories for Stage-1 platform skeleton decisions.
 These stories guide page intent and navigation only; they are not final workflow specs.
 
+## Role Scope Note
+Current-stage product roles are only: **AM, CM, SCP, CA**.
+Project-side information can be referenced as supporting context but is not treated as a primary product role in this stage.
+
 ## Contract & Billing Operations Workspace
 
 ### AM
@@ -71,6 +75,9 @@ These stories guide page intent and navigation only; they are not final workflow
   - CA review home and dashboard-oriented navigation baseline.
 - **Current round should NOT define**
   - Final KPI pack, final scorecard methodology, final board-report format.
+
+## Stage-1 Data Loop Note
+Stage-1 skeleton pages should read/write through a lightweight Python service backed by CSV files.
 
 ## Stage-1 Boundary Note
 The baseline captures intent, not final process design. Detailed user stories, final state machine, and final API/DB contracts remain deferred.

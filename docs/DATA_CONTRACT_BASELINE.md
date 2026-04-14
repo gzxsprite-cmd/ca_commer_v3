@@ -1,10 +1,11 @@
 # DATA_CONTRACT_BASELINE
 
 ## Purpose
-Define the minimum **demo data contract** for Stage-1 skeleton pages.
+Define the minimum **CSV-backed data contract** for Stage-1 skeleton pages.
 This is not a final backend schema or API contract.
 
 ## Contract Rules
+- CSV files are the Stage-1 source of truth.
 - Keep object set small and reusable.
 - Prefer stable ids + human-readable labels.
 - Ensure demo-critical fields support role homes and page placeholders.
@@ -76,10 +77,14 @@ This is not a final backend schema or API contract.
 - **Display-critical fields**: `metric_label`, `metric_value`, `trend_hint`.
 - **Deferred**: final KPI dictionary and benchmark rules.
 
-## Mock Data Format Guidance (Stage-1)
-- Prefer JSON for page placeholders and card summaries.
-- Optional CSV mirrors may be used for list-heavy demos.
-- Keep field naming aligned with this baseline across all mock slices.
+## CSV and Service Guidance (Stage-1)
+- CSV files are read/written only through a lightweight Python service.
+- Use safe write pattern for updates:
+  1. read current CSV
+  2. build updated content
+  3. write temp file
+  4. atomically replace original
+- Keep field naming aligned with this baseline across all CSV slices.
 
 ## Stage-1 Boundary Note
 This contract is for skeleton display wiring only. Final schema/API decisions remain deferred.
