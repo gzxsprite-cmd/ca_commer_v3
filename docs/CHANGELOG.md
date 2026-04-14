@@ -21,3 +21,9 @@
 ## 2026-04-14 — Local Run Documentation Added
 - Added `docs/RUN_LOCAL.md` with Stage-1 local startup instructions, quick start, prerequisites, URLs, CSV location, read/write behavior, and troubleshooting.
 - Updated `README.md` with a concise Quick Start and link to local run guide.
+
+## 2026-04-14 — Stage-1 Platform-wide UI Direction Correction
+- Refactored frontend shell to a stronger workspace UI frame (top bar + sidebar + context expression).
+- Completed Chinese-first wording pass for navigation, page titles, actions, helper text, status/table language.
+- Applied task-first page grammar across representative home/list/form/review/detail page types.
+- Added `docs/UI_REFACTOR_GUIDELINES_STAGE1.md` and updated UI/style grammar docs for reusable platform-wide guidance.

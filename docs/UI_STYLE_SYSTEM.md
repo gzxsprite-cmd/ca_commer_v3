@@ -1,61 +1,55 @@
 # UI_STYLE_SYSTEM
 
 ## Style Intent
-A **light, trustworthy, efficient** commercial workspace UI. Prioritize operational clarity over decoration.
+构建“轻量、可信、可执行”的中文企业内部工作台视觉风格。
+重点是：**任务清晰、角色清晰、工作空间清晰**。
 
-## Mandatory Style Principles
-- Consistency first across all pages
-- Fast scanning and low cognitive load
-- Clear action paths
-- Reusable visual patterns
+## Core Experience Principles
+1. 中文优先：标题、导航、动作文案、状态、表头默认中文。
+2. 任务优先：页面先回答“现在要做什么”，再展示数据细节。
+3. 角色清晰：用户应持续知道“我当前以什么角色工作”。
+4. 空间清晰：用户应持续知道“我在执行空间还是计划复盘空间”。
+5. 一致性优先：同类页面结构与控件表达必须一致。
 
-## Explicitly Forbidden Styles
-- Heavy traditional admin look (dense blocks, overly dark/heavy chrome)
-- Over-decorated landing-page style (hero-first, marketing-heavy visuals)
+## Explicitly Forbidden
+- 传统厚重后台风（高密度、重边框、强压迫感）
+- 英文技术原型风（业务语义弱、页面像开发工具）
+- 营销落地页风（装饰优先于任务）
 
-## Baseline Visual Tokens
+## Visual Tone
+- 主色：冷静蓝（行动与激活）
+- 中性色：灰阶（文本、边框、背景）
+- 背景：明亮、干净、低噪声
+- 重点：用留白和层级引导，而非堆叠装饰
 
-### Core Colors
-- Primary: calm blue range for key actions and active states
-- Neutral: gray scale for text, borders, surfaces
-- Background: light neutral, high readability
-
-### Status Colors
-- Success: green
-- Warning: amber/orange
-- Risk/Blocked: red
-- Info/In-progress: blue
-Use status colors as signals, not page decoration.
+## Shell Baseline
+- 顶栏：平台身份 + 当前工作空间 + 当前角色
+- 左侧栏：工作上下文切换 + 任务导航
+- 主区：页面身份区（标题/页面类型/角色/空间）+ 内容区
 
 ## Component Baselines
-### Shell
-- Fixed global header + consistent content container
-- Stable spacing and alignment rules
-
 ### Cards
-- Lightweight surface, subtle border/shadow
-- Clear title and key value/action
+- 必须表达业务含义（如“待签合同”“应收风险”）
+- 不用“卡片1/指标A”这类技术占位语
 
-### Tables / Lists
-- Prioritize readability and scan speed
-- Keep columns minimal in Stage-0
-- Support clear status/owner/next-step columns where applicable
+### Lists / Tables
+- 必须优先体现：当前状态 / 当前责任人 / 下一步
+- 表头用中文业务词汇，避免英文技术列名直出
 
-### Buttons
-- One primary action per region
-- Secondary and tertiary actions visually lower priority
+### Forms / Flow Pages
+- 先给操作说明，再给输入区
+- 主按钮使用直接动作文案（如“提交合同申请”）
+- 保留必要校验提示，不做复杂交互链
 
-### Inputs / Forms
-- Simple vertical rhythm
-- Clear labels and helper text
-- Avoid multi-layer interaction traps
+### Review / Detail
+- 评审页：左侧焦点清单 + 右侧决策提醒
+- 详情页：列表 + 侧栏详情，避免来回跳转丢上下文
 
-## Spacing Baseline
-- Use a consistent spacing scale (small/medium/large)
-- Avoid irregular one-off spacing decisions
+## Chinese Wording Rules
+- Contract Intake → 合同登记与申请
+- Contract Tracking → 合同进度追踪
+- Receivables → 应收账款
+- Current Owner → 当前责任人
+- Next Step → 下一步
 
-## Operational Clarity Requirement
-Where applicable, each record or task view must clearly display:
-- **Current Status**
-- **Current Owner**
-- **Next Step**
+统一要求：业务词汇稳定，不混用技术词与业务词。

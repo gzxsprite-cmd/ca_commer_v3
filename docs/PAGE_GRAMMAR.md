@@ -1,37 +1,37 @@
 # PAGE_GRAMMAR
 
 ## Purpose
-Define standard page archetypes for Stage-0 so new pages remain consistent and lightweight.
+定义 Stage-1 可复用页面语法，保证“中文优先 + 任务优先 + 角色清晰 + 空间清晰”。
 
-## 1) Role Home
-- **Goal**: Personal operational entry page by role.
-- **Key regions**: role context, pending actions, quick links, light summary.
-- **Should not happen**: becoming a full analytics dashboard or mega control center.
+## 1) 角色首页（Role Home）
+- **页面目标**：回答“我今天要先做什么”。
+- **关键区域**：今日重点、待办卡片、快捷入口、角色提示。
+- **不应发生**：变成重分析看板或信息堆叠中心。
 
-## 2) Workspace Home
-- **Goal**: Workspace-level orientation and entry distribution.
-- **Key regions**: workspace summary, main task lanes, key list entry points.
-- **Should not happen**: duplicating every downstream page detail.
+## 2) 工作空间首页（Workspace Home）
+- **页面目标**：回答“这个工作空间当前最重要的事是什么”。
+- **关键区域**：空间摘要、主任务分区、关键入口。
+- **不应发生**：复制所有下级页面明细。
 
-## 3) List / Trace
-- **Goal**: Efficiently scan and locate records/tasks.
-- **Key regions**: filters (light), list/table, status-owner-next-step visibility.
-- **Should not happen**: excessive filter complexity or hidden state meaning.
+## 3) 列表/追踪页（List / Trace）
+- **页面目标**：回答“哪里被阻塞、谁负责、下一步是什么”。
+- **关键区域**：任务提示、状态/责任/下一步为核心列、轻量筛选。
+- **不应发生**：复杂筛选迷宫、状态语义不透明。
 
-## 4) Flow / Form
-- **Goal**: Create/update a record with minimal friction.
-- **Key regions**: essential fields, contextual guidance, clear submit/save actions.
-- **Should not happen**: freezing final field model in Stage-0 or overlong forms.
+## 4) 流程/表单页（Flow / Form）
+- **页面目标**：回答“如何清晰且安全地完成一次提交”。
+- **关键区域**：操作说明、必要字段、主动作按钮、结果反馈。
+- **不应发生**：字段爆炸、隐藏关键动作、超长复杂流程。
 
-## 5) Review / Approval
-- **Goal**: Support quick, confident review decisions.
-- **Key regions**: summary context, critical checkpoints, decision actions, remarks.
-- **Should not happen**: burying decision impact or mixing unrelated operations.
+## 5) 评审/决策页（Review / Approval）
+- **页面目标**：回答“我应该重点看什么并做什么决策”。
+- **关键区域**：焦点事项区、风险提醒区、决策动作区。
+- **不应发生**：决策信息被淹没或动作含糊。
 
-## 6) Record Detail / Drawer
-- **Goal**: Inspect a single record quickly without losing navigation context.
-- **Key regions**: key metadata, timeline/trace snippet, actions, linked references.
-- **Should not happen**: replacing full page flows with overloaded drawers.
+## 6) 详情/侧栏页（Detail / Drawer）
+- **页面目标**：回答“这条记录当前全貌是什么”。
+- **关键区域**：主列表/主信息 + 右侧关键详情（状态/责任人/下一步）。
+- **不应发生**：为看详情反复跳页导致上下文丢失。
 
-## Stage-0 Limitation
-These archetypes define structure only. They do not lock final business content or detailed workflows.
+## Stage-1 Boundary
+本语法用于平台骨架与可用表达，不冻结最终业务流程细节。
