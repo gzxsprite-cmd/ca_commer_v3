@@ -16,6 +16,10 @@ FRONTEND_DIR = BASE_DIR.parent / "frontend"
 CSV_FILES = {
     "users_roles": DATA_DIR / "users_roles.csv",
     "workspaces": DATA_DIR / "workspaces.csv",
+    "roles": DATA_DIR / "roles.csv",
+    "workspace_role_visibility": DATA_DIR / "workspace_role_visibility.csv",
+    "nav_items": DATA_DIR / "nav_items.csv",
+    "nav_role_visibility": DATA_DIR / "nav_role_visibility.csv",
     "contract_cases": DATA_DIR / "contract_cases.csv",
     "contract_status_events": DATA_DIR / "contract_status_events.csv",
     "billing_plans": DATA_DIR / "billing_plans.csv",
@@ -139,6 +143,19 @@ class Handler(BaseHTTPRequestHandler):
             rows = read_csv_dicts(CSV_FILES["dashboard_summary_cards"])
             cards = [r for r in rows if r["workspace_code"] == workspace and r["role_code"] == role]
             return self._send_json(200, cards)
+
+        if path == "/api/shell/config":
+            return self._send_json(
+                200,
+                {
+                    "workspaces": read_csv_dicts(CSV_FILES["workspaces"]),
+                    "roles": read_csv_dicts(CSV_FILES["roles"]),
+                    "workspace_role_visibility": read_csv_dicts(CSV_FILES["workspace_role_visibility"]),
+                    "nav_items": read_csv_dicts(CSV_FILES["nav_items"]),
+                    "nav_role_visibility": read_csv_dicts(CSV_FILES["nav_role_visibility"]),
+                    "users": read_csv_dicts(CSV_FILES["users_roles"]),
+                },
+            )
 
         if path == "/api/ops/am/status-counts":
             rows = read_csv_dicts(CSV_FILES["contract_cases"])

@@ -68,3 +68,9 @@
 - Hid `合同进度详情` from visible sidebar navigation while keeping it as a child route entered from tracking list `查看详情`.
 - Removed standalone `合同归档与详情` route and page implementation to eliminate redundant detail surface.
 - Kept 合同进度追踪 list -> detail flow as the single detail path.
+
+## 2026-04-15 — Shell Visibility Refactor (CSV-driven Workspace/Role/Nav)
+- Refactored shell to product-style structure: top workspace switch, top-right role/user identity, and pure left navigation rail.
+- Removed debug-style left context controls and moved workspace/role switching out of sidebar.
+- Added CSV-driven shell visibility configuration (`workspaces`, `roles`, `workspace_role_visibility`, `nav_items`, `nav_role_visibility`) and wired frontend shell rendering to API-fed config.
+- Enforced workspace-role visibility framework: `ops -> AM/CM/CA`, `plan -> SCP/CM/CA`.

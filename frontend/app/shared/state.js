@@ -1,21 +1,79 @@
-export const roles = [
-  { code: "AM", label: "AM（客户经理）", hint: "负责合同发起与进度跟进" },
-  { code: "CM", label: "CM（商务管理）", hint: "负责合规审核与账款执行" },
-  { code: "SCP", label: "SCP（计划分析）", hint: "负责计划分解与偏差调整" },
-  { code: "CA", label: "CA（审批管理）", hint: "负责签署审批与管理复盘" },
-];
+export const state = {
+  role: "AM",
+  workspace: "ops",
+  workspaces: [],
+  roles: [],
+  workspaceRoleVisibility: [],
+  navItems: [],
+  navRoleVisibility: [],
+  users: [],
+};
 
-export const workspaces = [
-  { code: "ops", label: "合同与开票执行", desc: "执行工作区" },
-  { code: "plan", label: "计划与复盘管理", desc: "管理工作区" },
-];
+export function setShellConfig(config) {
+  state.workspaces = (config.workspaces || []).map((w) => ({
+    code: w.workspace_code,
+    label: w.workspace_label,
+    order: Number(w.display_order || 999),
+    enabled: String(w.is_enabled) === "1",
+  }));
+  state.roles = (config.roles || []).map((r) => ({
+    code: r.role_code,
+    label: r.role_label,
+    order: Number(r.display_order || 999),
+    enabled: String(r.is_enabled) === "1",
+  }));
+  state.workspaceRoleVisibility = config.workspace_role_visibility || [];
+  state.navItems = (config.nav_items || []).map((n) => ({
+    key: n.nav_key,
+    label: n.nav_label,
+    workspace: n.workspace_code,
+    route: n.route,
+    order: Number(n.display_order || 999),
+    enabled: String(n.is_enabled) === "1",
+  }));
+  state.navRoleVisibility = config.nav_role_visibility || [];
+  state.users = config.users || [];
 
-export const state = { role: "AM", workspace: "ops" };
+  if (!workspaceAllowedRoles(state.workspace).includes(state.role)) {
+    state.role = workspaceAllowedRoles(state.workspace)[0] || "AM";
+  }
+}
+
+export function enabledWorkspaces() {
+  return [...state.workspaces].filter((w) => w.enabled).sort((a, b) => a.order - b.order);
+}
+
+export function enabledRoles() {
+  return [...state.roles].filter((r) => r.enabled).sort((a, b) => a.order - b.order);
+}
+
+export function workspaceAllowedRoles(workspaceCode) {
+  const allowed = state.workspaceRoleVisibility
+    .filter((x) => x.workspace_code === workspaceCode && String(x.is_visible) === "1")
+    .map((x) => x.role_code);
+  return enabledRoles()
+    .map((r) => r.code)
+    .filter((code) => allowed.includes(code));
+}
+
+export function visibleNavItems(workspaceCode, roleCode) {
+  const roleVisibleNavKeys = state.navRoleVisibility
+    .filter((x) => x.role_code === roleCode && String(x.is_visible) === "1")
+    .map((x) => x.nav_key);
+
+  return state.navItems
+    .filter((n) => n.enabled && n.workspace === workspaceCode && roleVisibleNavKeys.includes(n.key))
+    .sort((a, b) => a.order - b.order);
+}
 
 export function currentRole() {
-  return roles.find((r) => r.code === state.role);
+  return enabledRoles().find((r) => r.code === state.role) || enabledRoles()[0] || { code: "", label: "" };
 }
 
 export function currentWorkspace() {
-  return workspaces.find((w) => w.code === state.workspace);
+  return enabledWorkspaces().find((w) => w.code === state.workspace) || enabledWorkspaces()[0] || { code: "", label: "" };
+}
+
+export function currentUser() {
+  return state.users.find((u) => u.role_code === state.role) || state.users[0] || { display_name: "Demo User" };
 }
