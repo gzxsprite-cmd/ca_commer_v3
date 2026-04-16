@@ -1,0 +1,3 @@
+billing_plan_id,period_key,contract_case_id,planned_amount,plan_status
+BP-001,2026-04,CC-001,50000,plan_pending
+BP-002,2026-05,CC-002,30000,plan_pending

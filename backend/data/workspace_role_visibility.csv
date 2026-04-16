@@ -1,0 +1,9 @@
+workspace_code,role_code,is_visible
+ops,AM,1
+ops,CM,1
+ops,CA,1
+ops,SCP,0
+plan,AM,0
+plan,CM,1
+plan,CA,1
+plan,SCP,1
