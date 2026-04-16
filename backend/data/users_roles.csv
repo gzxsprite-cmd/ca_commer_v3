@@ -1,0 +1,5 @@
+user_id,display_name,role_code,default_workspace
+U-AM-001,Amy AM,AM,ops
+U-CM-001,Chris CM,CM,ops
+U-SCP-001,Sam SCP,SCP,plan
+U-CA-001,Cathy CA,CA,ops
