@@ -428,7 +428,7 @@ class Handler(BaseHTTPRequestHandler):
 
             if action == "cm_confirm_complete":
                 if not row.get("formal_contract_id"):
-                    row["formal_contract_id"] = f"FC-{datetime.utcnow().strftime('%Y%m%d')}-{case_id[-4:]}"
+                    row["formal_contract_id"] = f"Official-{datetime.utcnow().strftime('%Y%m%d')}-{case_id[-4:]}"
                 row["execution_status"] = "pending_ca_sign"
                 row["current_owner_role"] = "CA"
                 row["next_step_label"] = "CA签字"

@@ -35,9 +35,11 @@ function renderCmAction(row) {
 
 function renderRow(row, isCm) {
   const status = cnStatus(row.execution_status || "");
+  const stage = row.execution_status === "submitted_in_review" ? "pending_cm_confirm" : row.execution_status;
+  const formalId = stage === "pending_cm_confirm" ? "" : row.formal_contract_id || "";
   return `<tr>
     <td>${safeText(row.contract_case_id || "-")}</td>
-    <td>${safeText(row.formal_contract_id || row.contract_code || "-")}</td>
+    <td>${safeText(formalId || "-")}</td>
     <td>${safeText(row.customer_name || "-")}</td>
     <td>${safeText(row.project_name || "-")}</td>
     <td>${safeText(row.product_name || "-")}</td>
