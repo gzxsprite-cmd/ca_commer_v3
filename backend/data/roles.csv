@@ -1,0 +1,5 @@
+role_code,role_label,display_order,is_enabled
+AM,AM（客户经理）,1,1
+CM,CM（商务管理）,2,1
+CA,CA（审批管理）,3,1
+SCP,SCP（计划分析）,4,1
