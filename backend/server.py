@@ -78,6 +78,7 @@ def status_bucket(raw: str) -> str:
         "pending_cm_archive": "pending_cm_archive",
         "execution_closed": "completed",
         "completed": "completed",
+        "archive_exception": "archive_exception",
     }
     return mapping.get(raw, raw or "submitted_in_review")
 
@@ -173,6 +174,25 @@ class Handler(BaseHTTPRequestHandler):
                     out[key] += 1
             return self._send_json(200, out)
 
+        if path == "/api/ops/cm/home-summary":
+            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            out = {
+                "pending_cm_confirm": 0,
+                "pending_cm_send": 0,
+                "pending_cm_archive": 0,
+                "archive_exception": 0,
+                "recent_items": [],
+            }
+            for r in rows:
+                key = status_bucket(r.get("execution_status", ""))
+                if key in out:
+                    out[key] += 1
+                if key == "submitted_in_review":
+                    out["pending_cm_confirm"] += 1
+            pending = [r for r in rows if status_bucket(r.get("execution_status", "")) in {"pending_cm_confirm", "pending_cm_send", "pending_cm_archive", "archive_exception"}]
+            out["recent_items"] = sorted(pending, key=lambda x: x.get("updated_at", ""), reverse=True)[:5]
+            return self._send_json(200, out)
+
         if path == "/api/ops/se3-snapshots":
             rows = read_csv_dicts(CSV_FILES["se3_snapshots"])
             pid = query.get("pid", [""])[0].strip()
@@ -212,8 +232,13 @@ class Handler(BaseHTTPRequestHandler):
             project_name = query.get("project_name", [""])[0].strip()
 
             def match(row: dict[str, str]) -> bool:
-                if status and status_bucket(row.get("execution_status", "")) != status:
-                    return False
+                bucket = status_bucket(row.get("execution_status", ""))
+                if status:
+                    if status == "pending_cm_confirm":
+                        if bucket not in {"pending_cm_confirm", "submitted_in_review"}:
+                            return False
+                    elif bucket != status:
+                        return False
                 if keyword and not any(
                     contains(row.get(k, ""), keyword)
                     for k in ("contract_case_id", "formal_contract_id", "contract_code", "customer_name", "project_name")
@@ -389,6 +414,83 @@ class Handler(BaseHTTPRequestHandler):
                     "flow_chain": ["CM 校验", "CA 签字", "CM 寄送合同", "CM 归档合同"],
                 },
             )
+
+        if path == "/api/ops/contracts/cm-action":
+            action = payload.get("action", "")
+            case_id = payload.get("contract_case_id", "")
+            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            idx = next((i for i, r in enumerate(rows) if r.get("contract_case_id") == case_id), -1)
+            if idx < 0:
+                return self._send_json(404, {"ok": False, "message": "contract not found"})
+
+            now = datetime.utcnow().isoformat(timespec="seconds")
+            row = rows[idx]
+
+            if action == "cm_confirm_complete":
+                if not row.get("formal_contract_id"):
+                    row["formal_contract_id"] = f"FC-{datetime.utcnow().strftime('%Y%m%d')}-{case_id[-4:]}"
+                row["execution_status"] = "pending_ca_sign"
+                row["current_owner_role"] = "CA"
+                row["next_step_label"] = "CA签字"
+                row["current_step"] = "CM 校验完成"
+                row["next_step"] = "CA 签字"
+                row["watermarked_pdf_path"] = row.get("watermarked_pdf_path") or "/assets/contracts/draft_sample.pdf"
+            elif action == "cm_to_send":
+                row["execution_status"] = "pending_cm_send"
+                row["current_owner_role"] = "CM"
+                row["next_step_label"] = "CM寄送"
+                row["current_step"] = "CM 寄送"
+                row["next_step"] = "CM 归档"
+                if payload.get("ca_single_sign_backup"):
+                    row["ca_single_sign_backup"] = payload.get("ca_single_sign_backup")
+            elif action == "cm_upload_ca_single_backup":
+                row["ca_single_sign_backup"] = payload.get("ca_single_sign_backup", "")
+            elif action == "cm_upload_dual_signed":
+                row["dual_signed_archive_file"] = payload.get("dual_signed_archive_file", "")
+                row["comparison_status"] = payload.get("comparison_status", "warning")
+                row["comparison_diff"] = payload.get("comparison_diff", "")
+                row["execution_status"] = "pending_cm_archive"
+                row["current_owner_role"] = "CM"
+                row["next_step_label"] = "CM归档确认"
+                row["current_step"] = "CM 归档核对"
+                row["next_step"] = "关闭"
+            elif action == "cm_close_archived":
+                row["execution_status"] = "completed"
+                row["archive_status"] = "archived_indexed"
+                row["comparison_status"] = "ok"
+                row["current_owner_role"] = "CM"
+                row["next_step_label"] = "关闭-已归档"
+                row["current_step"] = "已归档"
+                row["next_step"] = "-"
+            elif action == "cm_close_exception":
+                reason = payload.get("exception_reason", "").strip()
+                if not reason:
+                    return self._send_json(400, {"ok": False, "message": "exception reason required"})
+                row["execution_status"] = "archive_exception"
+                row["archive_status"] = "archive_exception"
+                row["exception_reason"] = reason
+                row["current_owner_role"] = "CM"
+                row["next_step_label"] = "关闭-归档异常"
+                row["current_step"] = "归档异常关闭"
+                row["next_step"] = "AM后续处理"
+            else:
+                return self._send_json(400, {"ok": False, "message": "unknown action"})
+
+            row["updated_at"] = now
+            rows[idx] = row
+            write_csv_atomic(CSV_FILES["contract_cases"], rows, list(rows[0].keys()))
+            append_csv_row(
+                CSV_FILES["contract_status_events"],
+                {
+                    "event_id": f"EV-{case_id}-{datetime.utcnow().strftime('%H%M%S')}",
+                    "contract_case_id": case_id,
+                    "event_type": action,
+                    "event_status": row.get("execution_status", ""),
+                    "event_time": now,
+                    "actor_role": "CM",
+                },
+            )
+            return self._send_json(200, {"ok": True, "contract_case_id": case_id, "execution_status": row.get("execution_status", "")})
 
         if path == "/api/ops/billing/execution":
             now = datetime.utcnow().isoformat(timespec="seconds")

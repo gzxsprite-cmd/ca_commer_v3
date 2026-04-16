@@ -74,3 +74,10 @@
 - Removed debug-style left context controls and moved workspace/role switching out of sidebar.
 - Added CSV-driven shell visibility configuration (`workspaces`, `roles`, `workspace_role_visibility`, `nav_items`, `nav_role_visibility`) and wired frontend shell rendering to API-fed config.
 - Enforced workspace-role visibility framework: `ops -> AM/CM/CA`, `plan -> SCP/CM/CA`.
+
+## 2026-04-16 — CM Contract Execution Storyline (Home/List/Detail)
+- Refined CM首页 to show CM-specific pending/attention summary cards with quick jump into 合同跟进列表页 status filters.
+- Upgraded 合同跟进列表页 with CM-oriented search/filter actions, low-fidelity simulated scan shortcut, and controlled direct transition to 待CM寄送 only.
+- Upgraded 合同跟进详情页 with CM contextual actions: 确认完毕, 下载带水印PDF(placeholder), 可选CA单签备份上传, 双签归档上传, 确认无误归档, 关闭-归档异常(必填原因).
+- Added minimal backend CM action endpoint and home summary endpoint; synchronized status progression on shared contract records for AM-side visibility.
+- Added contract-case extension fields for CM execution artifacts (watermark file path, backup/archive files, comparison status/diff, exception reason).
