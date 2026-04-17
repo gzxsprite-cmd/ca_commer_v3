@@ -94,3 +94,8 @@
 - Kept `contract_status_events` and `contract_archive_versions` as compatibility mirrors during transition.
 - Added `users.csv` core table and shell-config fallback compatibility to `users_roles.csv`.
 - Added `docs/CONTRACT_DATA_MODEL_REFACTOR_SUMMARY.md` for old->new mapping, migration scope, compatibility strategy, and known limitations.
+
+## 2026-04-17 — Post-refactor contract schema audit doc
+- Added `docs/POST_REFACTOR_CONTRACT_SCHEMA_AUDIT.md` to audit current CSV reality vs agreed contract-domain target structure.
+- Classified each expected table as fully/partially/unused based on actual CSV headers and backend/frontend runtime usage.
+- Recorded post-split gaps (legacy compatibility paths, weak runtime usage tables, seed inconsistencies) without redesigning model scope.
