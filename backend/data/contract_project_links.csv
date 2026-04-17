@@ -1,0 +1,7 @@
+project_link_id,contract_case_id,project_id,project_name,link_source,is_primary
+PL-0001-01,DMY-20260410-0001,PMS-001,Alpha-PMS,legacy_summary,1
+PL-0002-01,DMY-20260410-0002,PMS-002,Beta-PMS,legacy_summary,1
+PL-0003-01,DMY-20260410-0003,PMS-003,Gamma-PMS,legacy_summary,1
+PL-0004-01,DMY-20260410-0004,PMS-004,Delta-PMS,legacy_summary,1
+PL-0005-01,DMY-20260410-0005,PMS-005,Epsilon-PMS,legacy_summary,1
+PL-0006-01,DMY-20260410-0006,PMS-006,Zeta-PMS,legacy_summary,1
