@@ -1,0 +1,5 @@
+planning_record_id,planning_type,scope_key,period_key,planned_value,planning_status
+PR-001,contract,portfolio,2026-Q2,12,planning_published
+PR-002,billing,portfolio,2026-05,80000,planning_published
+PR-003,target,CCN-region,2026,1200000,planning_under_review
+PR-004,coverage,project-group-A,2026,1.15,planning_revised
