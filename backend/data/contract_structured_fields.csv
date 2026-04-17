@@ -1,0 +1,7 @@
+structured_field_id,contract_case_id,customer_contract_no,contract_name,total_amount,payment_terms,uploaded_file_name,extract_summary,tax_rate,pre_tax_amount,post_tax_amount,maintained_by_role,maintained_at
+SF-0001,DMY-20260410-0001,CNO-991001,Northwind Alpha OTP,120000,SOD-30%;PPAP-50%;SOP-20%,northwind_alpha.pdf,Northwind/Alpha Program/Brake ECU,13%,,120000,AM,2026-04-10T08:00:00
+SF-0002,DMY-20260410-0002,CNO-991002,Contoso Beta OTP,90000,SOD-40%;PPAP-40%;SOP-20%,contoso_beta.pdf,Contoso/Beta Program/Smart Sensor,13%,,90000,AM,2026-04-10T09:00:00
+SF-0003,DMY-20260410-0003,CNO-991003,Fabrikam Gamma OTP,150000,SOD-25%;PPAP-50%;SOP-25%,fabrikam_gamma.pdf,Fabrikam/Gamma Program/Domain Controller,13%,,150000,AM,2026-04-10T10:00:00
+SF-0004,DMY-20260410-0004,CNO-991004,Adventure Delta OTP,110000,SOD-30%;PPAP-40%;SOP-30%,adw_delta.pdf,Adventure Works/Delta Program/Cockpit Unit,13%,,110000,AM,2026-04-10T11:00:00
+SF-0005,DMY-20260410-0005,CNO-991005,Tailspin Epsilon OTP,130000,SOD-20%;PPAP-50%;SOP-30%,tailspin_epsilon.pdf,Tailspin/Epsilon Program/ADAS Camera,13%,,130000,AM,2026-04-10T12:00:00
+SF-0006,DMY-20260410-0006,CNO-991006,Litware Zeta OTP,175000,SOD-35%;PPAP-35%;SOP-30%,litware_zeta.pdf,Litware/Zeta Program/Battery Monitor,13%,,175000,AM,2026-04-10T13:00:00
