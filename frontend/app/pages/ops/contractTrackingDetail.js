@@ -51,6 +51,7 @@ function canDownloadWatermark(row) {
 function nextStepDisplay(row) {
   const stage = statusKey(row.execution_status);
   if (stage === "pending_cm_archive" || String(row.current_step || "").includes("CM 归档")) return "关闭";
+  if (stage === "pending_cm_send") return "CM归档";
   const raw = String(row.next_step_label || row.next_step || "-");
   const map = {
     "CM completeness confirm": "CM确认",
@@ -347,11 +348,9 @@ export default {
         () => {
           const file = prompt("输入双签归档文件名（演示）", "dual_signed_returned.pdf");
           if (!file) return;
-          const same = confirm("内容是否完全一致？确定=无误，取消=存在差异");
-          const diff = same ? "" : prompt("请填写差异说明（页码+差异内容）", "第2页金额条款文字差异");
           doAction(
             "cm_upload_dual_signed",
-            { dual_signed_archive_file: file, comparison_status: same ? "ok" : "warning", comparison_diff: diff || "" },
+            { dual_signed_archive_file: file, comparison_status: "warning", comparison_diff: "请先查看详情比对并确认差异说明" },
             "双签备份上传成功，已进入待CM归档"
           );
         },
@@ -367,11 +366,9 @@ export default {
         () => {
           const file = prompt("输入双签归档文件名（演示）", "dual_signed_returned.pdf");
           if (!file) return;
-          const same = confirm("内容是否完全一致？确定=无误，取消=存在差异");
-          const diff = same ? "" : prompt("请填写差异说明（页码+差异内容）", "第2页金额条款文字差异");
           doAction(
             "cm_upload_dual_signed",
-            { dual_signed_archive_file: file, comparison_status: same ? "ok" : "warning", comparison_diff: diff || "" },
+            { dual_signed_archive_file: file, comparison_status: "warning", comparison_diff: "请先查看详情比对并确认差异说明" },
             "双签备份上传成功，已进入待CM归档比对"
           );
         },
@@ -388,18 +385,26 @@ export default {
         <div class="actions"><button id="open-compare-modal" class="secondary">详情比对</button></div>
       `;
       document.getElementById("open-compare-modal")?.addEventListener("click", () => compareModal?.showModal());
-      addButton("cm-close-ok", "确认完毕", () => doAction("cm_close_archived", {}, "归档确认完成，合同已关闭"));
+      addButton("cm-close-ok", "关闭-已归档", () => doAction("cm_close_archived", {}, "关闭成功：已归档"));
       addButton(
         "cm-close-ex",
-        "关闭-归档异常",
+        "关闭-有异常",
         () => {
           reasonWrap.style.display = "block";
-          const reason = document.getElementById("cm-exception-reason")?.value.trim();
-          if (!reason) {
-            setFeedback("error", "归档异常必须填写原因");
-            return;
-          }
-          doAction("cm_close_exception", { exception_reason: reason }, "已按归档异常关闭");
+          const submitBtn = document.getElementById("cm-submit-ex");
+          if (submitBtn) return;
+          const wrap = document.createElement("div");
+          wrap.className = "actions";
+          wrap.innerHTML = '<button id="cm-submit-ex">提交异常关闭</button>';
+          reasonWrap.appendChild(wrap);
+          document.getElementById("cm-submit-ex")?.addEventListener("click", () => {
+            const reason = document.getElementById("cm-exception-reason")?.value.trim();
+            if (!reason) {
+              setFeedback("error", "关闭-有异常前必须提交异常原因");
+              return;
+            }
+            doAction("cm_close_exception", { exception_reason: reason }, "关闭成功：已归档异常");
+          });
         },
         true
       );
