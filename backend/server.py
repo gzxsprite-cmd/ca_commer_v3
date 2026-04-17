@@ -14,14 +14,25 @@ DATA_DIR = BASE_DIR / "data"
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
 
 CSV_FILES = {
-    "users_roles": DATA_DIR / "users_roles.csv",
+    "users_roles": DATA_DIR / "users_roles.csv",  # legacy compatibility
+    "users": DATA_DIR / "users.csv",
     "workspaces": DATA_DIR / "workspaces.csv",
     "roles": DATA_DIR / "roles.csv",
     "workspace_role_visibility": DATA_DIR / "workspace_role_visibility.csv",
     "nav_items": DATA_DIR / "nav_items.csv",
     "nav_role_visibility": DATA_DIR / "nav_role_visibility.csv",
     "contract_cases": DATA_DIR / "contract_cases.csv",
-    "contract_status_events": DATA_DIR / "contract_status_events.csv",
+    "contract_structured_fields": DATA_DIR / "contract_structured_fields.csv",
+    "contract_documents": DATA_DIR / "contract_documents.csv",
+    "contract_payment_nodes": DATA_DIR / "contract_payment_nodes.csv",
+    "contract_quote_links": DATA_DIR / "contract_quote_links.csv",
+    "contract_project_links": DATA_DIR / "contract_project_links.csv",
+    "contract_allocations": DATA_DIR / "contract_allocations.csv",
+    "contract_workflow_events": DATA_DIR / "contract_workflow_events.csv",
+    "contract_archive_reviews": DATA_DIR / "contract_archive_reviews.csv",
+    "contract_exception_records": DATA_DIR / "contract_exception_records.csv",
+    "contract_status_events": DATA_DIR / "contract_status_events.csv",  # legacy compatibility
+    "contract_archive_versions": DATA_DIR / "contract_archive_versions.csv",  # legacy compatibility
     "billing_plans": DATA_DIR / "billing_plans.csv",
     "billing_events": DATA_DIR / "billing_events.csv",
     "contract_balances": DATA_DIR / "contract_balances.csv",
@@ -31,11 +42,12 @@ CSV_FILES = {
     "dashboard_summary_cards": DATA_DIR / "dashboard_summary_cards.csv",
     "se3_snapshots": DATA_DIR / "se3_snapshots.csv",
     "pms_projects": DATA_DIR / "pms_projects.csv",
-    "contract_archive_versions": DATA_DIR / "contract_archive_versions.csv",
 }
 
 
 def read_csv_dicts(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
     with path.open("r", encoding="utf-8", newline="") as fh:
         return list(csv.DictReader(fh))
 
@@ -81,6 +93,159 @@ def status_bucket(raw: str) -> str:
         "archive_exception": "archive_exception",
     }
     return mapping.get(raw, raw or "submitted_in_review")
+
+
+def contract_domain_data() -> dict[str, list[dict[str, str]]]:
+    return {
+        "cases": read_csv_dicts(CSV_FILES["contract_cases"]),
+        "structured": read_csv_dicts(CSV_FILES["contract_structured_fields"]),
+        "documents": read_csv_dicts(CSV_FILES["contract_documents"]),
+        "payment_nodes": read_csv_dicts(CSV_FILES["contract_payment_nodes"]),
+        "quote_links": read_csv_dicts(CSV_FILES["contract_quote_links"]),
+        "project_links": read_csv_dicts(CSV_FILES["contract_project_links"]),
+        "allocations": read_csv_dicts(CSV_FILES["contract_allocations"]),
+        "workflow": read_csv_dicts(CSV_FILES["contract_workflow_events"]),
+        "archive_reviews": read_csv_dicts(CSV_FILES["contract_archive_reviews"]),
+        "exceptions": read_csv_dicts(CSV_FILES["contract_exception_records"]),
+    }
+
+
+def build_contract_view(case_row: dict[str, str], data: dict[str, list[dict[str, str]]]) -> dict[str, str]:
+    cid = case_row.get("contract_case_id", "")
+    structured = next((r for r in data["structured"] if r.get("contract_case_id") == cid), {})
+    docs = [r for r in data["documents"] if r.get("contract_case_id") == cid]
+    quote_links = [r for r in data["quote_links"] if r.get("contract_case_id") == cid]
+    project_links = [r for r in data["project_links"] if r.get("contract_case_id") == cid]
+    alloc_rows = [r for r in data["allocations"] if r.get("contract_case_id") == cid]
+    archive_review = next((r for r in data["archive_reviews"] if r.get("contract_case_id") == cid), {})
+    exception = next((r for r in data["exceptions"] if r.get("contract_case_id") == cid), {})
+
+    def doc_url(doc_type: str) -> str:
+        row = next((d for d in docs if d.get("document_type") == doc_type and d.get("file_url")), None)
+        return row.get("file_url", "") if row else ""
+
+    pms_links = [r.get("project_name", "") for r in project_links if r.get("project_name")]
+    se3_links = [r.get("pid", "") for r in quote_links if r.get("pid")]
+    allocation_summary = ";".join([f"{r.get('target_id', '')}:{r.get('allocated_amount', '0')}" for r in alloc_rows])
+
+    view = {
+        "contract_case_id": cid,
+        "contract_code": case_row.get("contract_code", ""),
+        "formal_contract_id": case_row.get("official_contract_id", ""),
+        "contract_type": case_row.get("contract_type", ""),
+        "customer_contract_no": structured.get("customer_contract_no", ""),
+        "customer_name": case_row.get("customer_name", ""),
+        "project_name": case_row.get("project_name", ""),
+        "product_name": case_row.get("product_name", ""),
+        "contract_name": structured.get("contract_name") or case_row.get("contract_title", ""),
+        "total_amount": structured.get("total_amount", "0"),
+        "payment_terms": structured.get("payment_terms", ""),
+        "uploaded_file_name": structured.get("uploaded_file_name", ""),
+        "se3_summary": ", ".join(se3_links),
+        "pms_summary": ", ".join(pms_links),
+        "extract_summary": structured.get("extract_summary", ""),
+        "allocation_summary": allocation_summary,
+        "am_owner_id": case_row.get("am_owner_id") or case_row.get("main_owner_id", ""),
+        "cm_owner_id": case_row.get("cm_owner_id", ""),
+        "execution_status": case_row.get("execution_status", ""),
+        "archive_status": case_row.get("archive_status", ""),
+        "current_owner_role": case_row.get("current_owner_role", ""),
+        "next_step_label": case_row.get("next_step_label", ""),
+        "flow_chain": case_row.get("flow_chain", ""),
+        "current_step": case_row.get("current_step", ""),
+        "next_step": case_row.get("next_step", ""),
+        "created_at": case_row.get("created_at", ""),
+        "updated_at": case_row.get("updated_at", ""),
+        "watermarked_pdf_path": doc_url("watermarked_formal"),
+        "ca_single_sign_backup": doc_url("ca_single_signed") or doc_url("single_sign"),
+        "dual_signed_archive_file": doc_url("dual_signed") or doc_url("double_sign"),
+        "comparison_status": archive_review.get("comparison_status", ""),
+        "comparison_diff": archive_review.get("diff_summary", ""),
+        "exception_reason": exception.get("cm_comment", ""),
+        "tax_rate": structured.get("tax_rate", "13%"),
+        "pre_tax_amount": structured.get("pre_tax_amount", ""),
+        "post_tax_amount": structured.get("post_tax_amount", ""),
+    }
+    return view
+
+
+def write_case_rows(rows: list[dict[str, str]]) -> None:
+    if not rows:
+        return
+    write_csv_atomic(CSV_FILES["contract_cases"], rows, list(rows[0].keys()))
+
+
+def upsert_structured(case_id: str, data: dict[str, str], now: str, role: str = "AM") -> None:
+    rows = read_csv_dicts(CSV_FILES["contract_structured_fields"])
+    idx = next((i for i, r in enumerate(rows) if r.get("contract_case_id") == case_id), -1)
+    payload = {
+        "structured_field_id": rows[idx]["structured_field_id"] if idx >= 0 else f"SF-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{case_id[-4:]}",
+        "contract_case_id": case_id,
+        "customer_contract_no": data.get("customer_contract_no", ""),
+        "contract_name": data.get("contract_name", ""),
+        "total_amount": str(data.get("total_amount", "0")),
+        "payment_terms": data.get("payment_terms", ""),
+        "uploaded_file_name": data.get("uploaded_file_name", ""),
+        "extract_summary": data.get("extract_summary", ""),
+        "tax_rate": data.get("tax_rate", "13%"),
+        "pre_tax_amount": str(data.get("pre_tax_amount", "")),
+        "post_tax_amount": str(data.get("post_tax_amount", data.get("total_amount", "0"))),
+        "maintained_by_role": role,
+        "maintained_at": now,
+    }
+    if idx >= 0:
+        rows[idx] = payload
+    else:
+        rows.append(payload)
+    write_csv_atomic(CSV_FILES["contract_structured_fields"], rows, list(rows[0].keys()))
+
+
+def replace_child_rows(file_key: str, case_id: str, new_rows: list[dict[str, str]]) -> None:
+    rows = [r for r in read_csv_dicts(CSV_FILES[file_key]) if r.get("contract_case_id") != case_id]
+    rows.extend(new_rows)
+    if rows:
+        write_csv_atomic(CSV_FILES[file_key], rows, list(rows[0].keys()))
+
+
+def append_workflow_event(case_id: str, event_type: str, event_status: str, actor_role: str, event_comment: str = "") -> None:
+    now = datetime.utcnow().isoformat(timespec="seconds")
+    event_id = f"EV-{case_id}-{datetime.utcnow().strftime('%H%M%S')}"
+    event = {
+        "event_id": event_id,
+        "contract_case_id": case_id,
+        "event_type": event_type,
+        "event_status": event_status,
+        "event_time": now,
+        "actor_role": actor_role,
+        "event_comment": event_comment,
+    }
+    append_csv_row(CSV_FILES["contract_workflow_events"], event)
+    append_csv_row(
+        CSV_FILES["contract_status_events"],
+        {k: event.get(k, "") for k in ["event_id", "contract_case_id", "event_type", "event_status", "event_time", "actor_role"]},
+    )
+
+
+def upsert_archive_review(case_id: str, status: str, diff_summary: str, actor_role: str) -> None:
+    rows = read_csv_dicts(CSV_FILES["contract_archive_reviews"])
+    idx = next((i for i, r in enumerate(rows) if r.get("contract_case_id") == case_id), -1)
+    now = datetime.utcnow().isoformat(timespec="seconds")
+    payload = {
+        "archive_review_id": rows[idx]["archive_review_id"] if idx >= 0 else f"AR-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{case_id[-4:]}",
+        "contract_case_id": case_id,
+        "comparison_base_document_type": "draft",
+        "comparison_target_document_type": "dual_signed",
+        "comparison_status": status,
+        "diff_summary": diff_summary,
+        "diff_page_refs": "",
+        "reviewed_by_role": actor_role,
+        "reviewed_at": now,
+    }
+    if idx >= 0:
+        rows[idx] = payload
+    else:
+        rows.append(payload)
+    write_csv_atomic(CSV_FILES["contract_archive_reviews"], rows, list(rows[0].keys()))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -146,6 +311,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_json(200, cards)
 
         if path == "/api/shell/config":
+            users = read_csv_dicts(CSV_FILES["users"]) or read_csv_dicts(CSV_FILES["users_roles"])
             return self._send_json(
                 200,
                 {
@@ -154,12 +320,13 @@ class Handler(BaseHTTPRequestHandler):
                     "workspace_role_visibility": read_csv_dicts(CSV_FILES["workspace_role_visibility"]),
                     "nav_items": read_csv_dicts(CSV_FILES["nav_items"]),
                     "nav_role_visibility": read_csv_dicts(CSV_FILES["nav_role_visibility"]),
-                    "users": read_csv_dicts(CSV_FILES["users_roles"]),
+                    "users": users,
                 },
             )
 
         if path == "/api/ops/am/status-counts":
-            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            data = contract_domain_data()
+            rows = [build_contract_view(r, data) for r in data["cases"]]
             out = {
                 "pending_cm_confirm": 0,
                 "pending_ca_sign": 0,
@@ -177,7 +344,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_json(200, out)
 
         if path == "/api/ops/cm/home-summary":
-            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            data = contract_domain_data()
+            rows = [build_contract_view(r, data) for r in data["cases"]]
             out = {
                 "pending_cm_confirm": 0,
                 "pending_ca_sign": 0,
@@ -227,7 +395,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_json(200, rows)
 
         if path == "/api/ops/contracts/tracking":
-            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            data = contract_domain_data()
+            rows = [build_contract_view(r, data) for r in data["cases"]]
             status = query.get("status", [""])[0].strip()
             keyword = query.get("q", [""])[0].strip()
             dummy_id = query.get("dummy_id", [""])[0].strip()
@@ -263,17 +432,21 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/ops/contracts/tracking/detail":
             contract_case_id = query.get("contract_case_id", [""])[0].strip()
-            rows = read_csv_dicts(CSV_FILES["contract_cases"])
-            target = next((r for r in rows if r.get("contract_case_id") == contract_case_id), {})
-            return self._send_json(200, target)
+            data = contract_domain_data()
+            case_row = next((r for r in data["cases"] if r.get("contract_case_id") == contract_case_id), None)
+            if not case_row:
+                return self._send_json(200, {})
+            return self._send_json(200, build_contract_view(case_row, data))
 
         if path == "/api/ops/contracts/review-queue":
-            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            data = contract_domain_data()
+            rows = [build_contract_view(r, data) for r in data["cases"]]
             queue = [r for r in rows if r["execution_status"] in {"cm_in_review", "ca_pending_signature"}]
             return self._send_json(200, queue)
 
         if path == "/api/ops/contracts/archive":
-            rows = read_csv_dicts(CSV_FILES["contract_cases"])
+            data = contract_domain_data()
+            rows = [build_contract_view(r, data) for r in data["cases"]]
             keyword = query.get("q", [""])[0].strip()
             dummy_id = query.get("dummy_id", [""])[0].strip()
             formal_id = query.get("formal_id", [""])[0].strip()
@@ -305,8 +478,21 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/ops/contracts/archive/versions":
             contract_case_id = query.get("contract_case_id", [""])[0].strip()
-            rows = read_csv_dicts(CSV_FILES["contract_archive_versions"])
-            out = [r for r in rows if r.get("contract_case_id") == contract_case_id]
+            docs = read_csv_dicts(CSV_FILES["contract_documents"])
+            out = [
+                {
+                    "version_id": r.get("document_id", ""),
+                    "contract_case_id": r.get("contract_case_id", ""),
+                    "version_type": r.get("document_type", ""),
+                    "version_label": r.get("version_label", ""),
+                    "file_url": r.get("file_url", ""),
+                }
+                for r in docs
+                if r.get("contract_case_id") == contract_case_id and r.get("document_type") in {"draft", "single_sign", "double_sign", "ca_single_signed", "dual_signed"}
+            ]
+            if not out:
+                legacy_rows = read_csv_dicts(CSV_FILES["contract_archive_versions"])
+                out = [r for r in legacy_rows if r.get("contract_case_id") == contract_case_id]
             return self._send_json(200, out)
 
         if path == "/api/ops/billing/records":
@@ -360,56 +546,155 @@ class Handler(BaseHTTPRequestHandler):
         payload = self._read_json()
 
         if path == "/api/ops/contracts/intake":
-            now = datetime.utcnow()
-            ts = now.strftime("%Y%m%d-%H%M%S")
+            now_dt = datetime.utcnow()
+            now = now_dt.isoformat(timespec="seconds")
+            ts = now_dt.strftime("%Y%m%d-%H%M%S")
             contract_id = payload.get("contract_case_id", f"DMY-{ts}")
             extracted = payload.get("extracted_fields", {})
             se3_matches = payload.get("se3_matches", [])
             pms_matches = payload.get("pms_matches", [])
-            allocations = payload.get("allocations", {})
+            allocation_payload = payload.get("allocations", {})
 
             flow_chain = "AM提交 -> CM校验 -> CA签字 -> CM寄出 -> CM归档"
             new_case = {
                 "contract_case_id": contract_id,
                 "contract_code": payload.get("contract_code", contract_id),
-                "formal_contract_id": payload.get("formal_contract_id", ""),
+                "dummy_contract_id": contract_id,
+                "official_contract_id": payload.get("formal_contract_id", ""),
                 "contract_type": payload.get("contract_type", "OTP"),
-                "customer_contract_no": extracted.get("customer_contract_no", ""),
                 "customer_name": extracted.get("customer_name", "TBD Customer"),
                 "project_name": extracted.get("project_name", ""),
                 "product_name": extracted.get("product_name", ""),
-                "contract_name": extracted.get("contract_name", ""),
-                "total_amount": str(extracted.get("total_amount", "0")),
-                "payment_terms": extracted.get("payment_terms", ""),
-                "uploaded_file_name": payload.get("uploaded_file_name", ""),
-                "se3_summary": ", ".join([x.get("pid", "") for x in se3_matches]),
-                "pms_summary": ", ".join([x.get("project_name", "") for x in pms_matches]),
-                "extract_summary": f"{extracted.get('customer_name', '')}/{extracted.get('project_name', '')}/{extracted.get('product_name', '')}",
-                "allocation_summary": json.dumps(allocations, ensure_ascii=False),
+                "contract_title": extracted.get("contract_name", ""),
+                "main_owner_id": payload.get("am_owner_id", "U-AM-001"),
                 "am_owner_id": payload.get("am_owner_id", "U-AM-001"),
                 "cm_owner_id": payload.get("cm_owner_id", "U-CM-001"),
-                "execution_status": "submitted_in_review",
-                "archive_status": "not_archived",
                 "current_owner_role": "CM",
-                "next_step_label": "CM completeness confirm",
-                "flow_chain": flow_chain,
+                "execution_status": "submitted_in_review",
                 "current_step": "CM 校验",
                 "next_step": "CA 签字",
-                "created_at": now.isoformat(timespec="seconds"),
-                "updated_at": now.isoformat(timespec="seconds"),
+                "next_step_label": "CM completeness confirm",
+                "archive_effective_flag": "0",
+                "archive_status": "not_archived",
+                "flow_chain": flow_chain,
+                "created_at": now,
+                "updated_at": now,
             }
             append_csv_row(CSV_FILES["contract_cases"], new_case)
-            append_csv_row(
-                CSV_FILES["contract_status_events"],
+
+            upsert_structured(
+                contract_id,
                 {
-                    "event_id": f"EV-{contract_id}",
-                    "contract_case_id": contract_id,
-                    "event_type": "submitted",
-                    "event_status": "submitted_in_review",
-                    "event_time": now.isoformat(timespec="seconds"),
-                    "actor_role": payload.get("actor_role", "AM"),
+                    "customer_contract_no": extracted.get("customer_contract_no", ""),
+                    "contract_name": extracted.get("contract_name", ""),
+                    "total_amount": extracted.get("total_amount", "0"),
+                    "payment_terms": extracted.get("payment_terms", ""),
+                    "uploaded_file_name": payload.get("uploaded_file_name", ""),
+                    "extract_summary": f"{extracted.get('customer_name', '')}/{extracted.get('project_name', '')}/{extracted.get('product_name', '')}",
+                    "post_tax_amount": extracted.get("total_amount", "0"),
                 },
+                now,
+                "AM",
             )
+
+            replace_child_rows(
+                "contract_quote_links",
+                contract_id,
+                [
+                    {
+                        "quote_link_id": f"QL-{contract_id}-{i+1}",
+                        "contract_case_id": contract_id,
+                        "snapshot_id": x.get("snapshot_id", ""),
+                        "pid": x.get("pid", ""),
+                        "link_source": "am_intake",
+                        "is_primary": "1" if i == 0 else "0",
+                    }
+                    for i, x in enumerate(se3_matches)
+                ],
+            )
+
+            replace_child_rows(
+                "contract_project_links",
+                contract_id,
+                [
+                    {
+                        "project_link_id": f"PL-{contract_id}-{i+1}",
+                        "contract_case_id": contract_id,
+                        "project_id": x.get("project_id", ""),
+                        "project_name": x.get("project_name", ""),
+                        "link_source": "am_intake",
+                        "is_primary": "1" if i == 0 else "0",
+                    }
+                    for i, x in enumerate(pms_matches)
+                ],
+            )
+
+            payment_nodes = allocation_payload.get("payment_nodes", [])
+            replace_child_rows(
+                "contract_payment_nodes",
+                contract_id,
+                [
+                    {
+                        "payment_node_id": f"PN-{contract_id}-{i+1}",
+                        "contract_case_id": contract_id,
+                        "node_name": x.get("node", ""),
+                        "node_ratio": str(x.get("percent", "")),
+                        "node_amount": str(x.get("amount", "")),
+                        "node_sequence": str(i + 1),
+                        "payment_year": "",
+                    }
+                    for i, x in enumerate(payment_nodes)
+                ],
+            )
+
+            allocations = []
+            for i, item in enumerate(allocation_payload.get("projects", [])):
+                allocations.append(
+                    {
+                        "allocation_id": f"AL-{contract_id}-{i+1}",
+                        "contract_case_id": contract_id,
+                        "target_type": "project",
+                        "target_id": item.get("project_id", ""),
+                        "target_name": item.get("project_id", ""),
+                        "allocated_amount": str(item.get("amount", "0")),
+                        "currency": "CNY",
+                        "source_note": "am_intake",
+                    }
+                )
+            allocations.append(
+                {
+                    "allocation_id": f"AL-{contract_id}-BUFFER",
+                    "contract_case_id": contract_id,
+                    "target_type": "buffer",
+                    "target_id": "BUFFER",
+                    "target_name": "Others / Buffer",
+                    "allocated_amount": str(allocation_payload.get("others_buffer", "0")),
+                    "currency": "CNY",
+                    "source_note": "am_intake",
+                }
+            )
+            replace_child_rows("contract_allocations", contract_id, allocations)
+
+            replace_child_rows(
+                "contract_documents",
+                contract_id,
+                [
+                    {
+                        "document_id": f"DOC-{contract_id}-DRAFT",
+                        "contract_case_id": contract_id,
+                        "document_type": "draft",
+                        "version_label": "草拟版",
+                        "file_url": "/assets/contracts/draft_sample.pdf",
+                        "is_current": "1",
+                        "uploaded_by_role": "AM",
+                        "uploaded_at": now,
+                    }
+                ],
+            )
+
+            upsert_archive_review(contract_id, "pending", "", "AM")
+            append_workflow_event(contract_id, "submitted", "submitted_in_review", payload.get("actor_role", "AM"))
+
             return self._send_json(
                 201,
                 {
@@ -429,16 +714,31 @@ class Handler(BaseHTTPRequestHandler):
 
             now = datetime.utcnow().isoformat(timespec="seconds")
             row = rows[idx]
+            event_comment = ""
 
             if action == "cm_confirm_complete":
-                if not row.get("formal_contract_id"):
-                    row["formal_contract_id"] = f"Official-{datetime.utcnow().strftime('%Y%m%d')}-{case_id[-4:]}"
+                if not row.get("official_contract_id"):
+                    row["official_contract_id"] = f"Official-{datetime.utcnow().strftime('%Y%m%d')}-{case_id[-4:]}"
                 row["execution_status"] = "pending_ca_sign"
                 row["current_owner_role"] = "CA"
                 row["next_step_label"] = "CA签字"
                 row["current_step"] = "CM 校验完成"
                 row["next_step"] = "CA 签字"
-                row["watermarked_pdf_path"] = row.get("watermarked_pdf_path") or "/assets/contracts/draft_sample.pdf"
+                docs = read_csv_dicts(CSV_FILES["contract_documents"])
+                if not any(d.get("contract_case_id") == case_id and d.get("document_type") == "watermarked_formal" for d in docs):
+                    append_csv_row(
+                        CSV_FILES["contract_documents"],
+                        {
+                            "document_id": f"DOC-{case_id}-WM",
+                            "contract_case_id": case_id,
+                            "document_type": "watermarked_formal",
+                            "version_label": "带水印版",
+                            "file_url": "/assets/contracts/draft_sample.pdf",
+                            "is_current": "1",
+                            "uploaded_by_role": "CM",
+                            "uploaded_at": now,
+                        },
+                    )
             elif action == "cm_to_send":
                 row["execution_status"] = "pending_cm_send"
                 row["current_owner_role"] = "CM"
@@ -446,13 +746,48 @@ class Handler(BaseHTTPRequestHandler):
                 row["current_step"] = "CM 寄出"
                 row["next_step"] = "CM 归档"
                 if payload.get("ca_single_sign_backup"):
-                    row["ca_single_sign_backup"] = payload.get("ca_single_sign_backup")
+                    append_csv_row(
+                        CSV_FILES["contract_documents"],
+                        {
+                            "document_id": f"DOC-{case_id}-SINGLE-{datetime.utcnow().strftime('%H%M%S')}",
+                            "contract_case_id": case_id,
+                            "document_type": "ca_single_signed",
+                            "version_label": "单签版",
+                            "file_url": payload.get("ca_single_sign_backup"),
+                            "is_current": "1",
+                            "uploaded_by_role": "CM",
+                            "uploaded_at": now,
+                        },
+                    )
             elif action == "cm_upload_ca_single_backup":
-                row["ca_single_sign_backup"] = payload.get("ca_single_sign_backup", "")
+                append_csv_row(
+                    CSV_FILES["contract_documents"],
+                    {
+                        "document_id": f"DOC-{case_id}-SINGLE-{datetime.utcnow().strftime('%H%M%S')}",
+                        "contract_case_id": case_id,
+                        "document_type": "ca_single_signed",
+                        "version_label": "单签版",
+                        "file_url": payload.get("ca_single_sign_backup", ""),
+                        "is_current": "1",
+                        "uploaded_by_role": "CM",
+                        "uploaded_at": now,
+                    },
+                )
             elif action == "cm_upload_dual_signed":
-                row["dual_signed_archive_file"] = payload.get("dual_signed_archive_file", "")
-                row["comparison_status"] = payload.get("comparison_status", "warning")
-                row["comparison_diff"] = payload.get("comparison_diff", "")
+                append_csv_row(
+                    CSV_FILES["contract_documents"],
+                    {
+                        "document_id": f"DOC-{case_id}-DUAL-{datetime.utcnow().strftime('%H%M%S')}",
+                        "contract_case_id": case_id,
+                        "document_type": "dual_signed",
+                        "version_label": "双签版",
+                        "file_url": payload.get("dual_signed_archive_file", ""),
+                        "is_current": "1",
+                        "uploaded_by_role": "CM",
+                        "uploaded_at": now,
+                    },
+                )
+                upsert_archive_review(case_id, payload.get("comparison_status", "warning"), payload.get("comparison_diff", ""), "CM")
                 row["execution_status"] = "pending_cm_archive"
                 row["current_owner_role"] = "CM"
                 row["next_step_label"] = "CM归档确认"
@@ -461,39 +796,43 @@ class Handler(BaseHTTPRequestHandler):
             elif action == "cm_close_archived":
                 row["execution_status"] = "completed"
                 row["archive_status"] = "archived_indexed"
-                row["comparison_status"] = "ok"
+                row["archive_effective_flag"] = "1"
                 row["current_owner_role"] = "CM"
                 row["next_step_label"] = "关闭-已归档"
                 row["current_step"] = "已归档"
                 row["next_step"] = "-"
+                upsert_archive_review(case_id, "ok", "", "CM")
             elif action == "cm_close_exception":
                 reason = payload.get("exception_reason", "").strip()
                 if not reason:
                     return self._send_json(400, {"ok": False, "message": "exception reason required"})
                 row["execution_status"] = "archive_exception"
                 row["archive_status"] = "archive_exception"
-                row["exception_reason"] = reason
                 row["current_owner_role"] = "CM"
                 row["next_step_label"] = "关闭-归档异常"
                 row["current_step"] = "归档异常关闭"
                 row["next_step"] = "AM后续处理"
+                review_row = next((r for r in read_csv_dicts(CSV_FILES["contract_archive_reviews"]) if r.get("contract_case_id") == case_id), {})
+                event_comment = reason
+                append_csv_row(
+                    CSV_FILES["contract_exception_records"],
+                    {
+                        "exception_record_id": f"EX-{case_id}-{datetime.utcnow().strftime('%H%M%S')}",
+                        "contract_case_id": case_id,
+                        "system_anomaly_reason": review_row.get("diff_summary", ""),
+                        "cm_comment": reason,
+                        "created_by_role": "CM",
+                        "created_at": now,
+                        "exception_status": "closed_exception",
+                    },
+                )
             else:
                 return self._send_json(400, {"ok": False, "message": "unknown action"})
 
             row["updated_at"] = now
             rows[idx] = row
-            write_csv_atomic(CSV_FILES["contract_cases"], rows, list(rows[0].keys()))
-            append_csv_row(
-                CSV_FILES["contract_status_events"],
-                {
-                    "event_id": f"EV-{case_id}-{datetime.utcnow().strftime('%H%M%S')}",
-                    "contract_case_id": case_id,
-                    "event_type": action,
-                    "event_status": row.get("execution_status", ""),
-                    "event_time": now,
-                    "actor_role": "CM",
-                },
-            )
+            write_case_rows(rows)
+            append_workflow_event(case_id, action, row.get("execution_status", ""), "CM", event_comment)
             return self._send_json(200, {"ok": True, "contract_case_id": case_id, "execution_status": row.get("execution_status", "")})
 
         if path == "/api/ops/billing/execution":

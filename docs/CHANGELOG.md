@@ -86,3 +86,11 @@
 - 新增 `docs/CSV_TABLE_SCHEMA_RELATIONSHIP_CN.md`，按当前 `backend/data/*.csv` 逐表补充中文说明。
 - 明确每张表的业务含义、字段含义、以及关联关系含义（含强关联与弱关联边界）。
 - 增补合同主线、开票/应收链路、工作区-角色-导航可见性三类关系的中文总览，便于产品/研发对齐。
+
+## 2026-04-17 — Contract Data Model Refactor (contract-flow only)
+- Refactored contract domain from overloaded `contract_cases` to a staged snapshot + child-table model: `contract_structured_fields`, `contract_documents`, `contract_payment_nodes`, `contract_quote_links`, `contract_project_links`, `contract_allocations`, `contract_workflow_events`, `contract_archive_reviews`, `contract_exception_records`.
+- Slimmed `contract_cases` into current execution snapshot fields and moved specialized payloads into dedicated contract child tables.
+- Updated backend contract endpoints to assemble frontend-compatible response view models from normalized CSV tables while preserving existing routes and page contracts.
+- Kept `contract_status_events` and `contract_archive_versions` as compatibility mirrors during transition.
+- Added `users.csv` core table and shell-config fallback compatibility to `users_roles.csv`.
+- Added `docs/CONTRACT_DATA_MODEL_REFACTOR_SUMMARY.md` for old->new mapping, migration scope, compatibility strategy, and known limitations.

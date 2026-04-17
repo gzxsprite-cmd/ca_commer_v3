@@ -1,0 +1,9 @@
+document_id,contract_case_id,document_type,version_label,file_url,is_current,uploaded_by_role,uploaded_at
+DOC-0001-DRAFT,DMY-20260410-0001,draft,草拟版,/assets/contracts/draft_sample.pdf,1,AM,2026-04-10T08:00:00
+DOC-0002-DRAFT,DMY-20260410-0002,draft,草拟版,/assets/contracts/draft_sample.pdf,1,AM,2026-04-10T09:00:00
+DOC-0003-DRAFT,DMY-20260410-0003,draft,草拟版,/assets/contracts/draft_sample.pdf,1,AM,2026-04-10T10:00:00
+DOC-0004-DRAFT,DMY-20260410-0004,draft,草拟版,/assets/contracts/draft_sample.pdf,1,AM,2026-04-10T11:00:00
+DOC-0005-DRAFT,DMY-20260410-0005,draft,草拟版,/assets/contracts/draft_sample.pdf,1,AM,2026-04-10T12:00:00
+DOC-0006-DRAFT,DMY-20260410-0006,draft,草拟版,/assets/contracts/draft_sample.pdf,1,AM,2026-04-10T13:00:00
+ARV-002,DMY-20260410-0006,single_sign,单签版,/assets/contracts/single_sign_sample.pdf,1,CM,
+ARV-003,DMY-20260410-0006,double_sign,双签版,/assets/contracts/double_sign_sample.pdf,1,CM,
