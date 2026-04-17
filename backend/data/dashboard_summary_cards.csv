@@ -1,0 +1,16 @@
+card_id,workspace_code,role_code,card_key,metric_value,metric_label,trend_hint
+CARD-OPS-AM-1,ops,AM,my_pending_submissions,4,My Pending Submissions,up
+CARD-OPS-AM-2,ops,AM,pending_ca_sign,2,Pending CA Sign,flat
+CARD-OPS-AM-3,ops,AM,my_receivable,80000,My Receivable Outstanding,up
+CARD-OPS-CM-1,ops,CM,new_review_queue,3,New Review Queue,up
+CARD-OPS-CM-2,ops,CM,month_billing_plan,50000,This Month Billing Plan,flat
+CARD-OPS-CM-3,ops,CM,outstanding_receivable,140000,Outstanding Receivable,up
+CARD-OPS-CA-1,ops,CA,pending_signature,2,Pending Signature,flat
+CARD-OPS-CA-2,ops,CA,signed_recently,6,Signed Recently,up
+CARD-OPS-CA-3,ops,CA,need_attention,1,Need Attention,down
+CARD-PLAN-SCP-1,plan,SCP,managed_contracts,28,Managed Contracts,flat
+CARD-PLAN-SCP-2,plan,SCP,planned_billing_3m,240000,Planned Billing Next 3M,up
+CARD-PLAN-SCP-3,plan,SCP,adjustment_backlog,2,Adjustment Backlog,flat
+CARD-PLAN-CA-1,plan,CA,target_progress,68%,Target Progress,up
+CARD-PLAN-CA-2,plan,CA,collection_outlook,82%,Collection Outlook,flat
+CARD-PLAN-CA-3,plan,CA,coverage_risk,3,Coverage Risk Signals,down
