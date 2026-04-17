@@ -51,7 +51,16 @@ function canDownloadWatermark(row) {
 function nextStepDisplay(row) {
   const stage = statusKey(row.execution_status);
   if (stage === "pending_cm_archive" || String(row.current_step || "").includes("CM 归档")) return "关闭";
-  return row.next_step_label || row.next_step || "-";
+  const raw = String(row.next_step_label || row.next_step || "-");
+  const map = {
+    "CM completeness confirm": "CM确认",
+    "CM owner confirm": "CM确认",
+    "CA signature": "CA签字",
+    "CM send hardcopy": "CM寄出",
+    "CM archive package": "CM归档",
+    "Reference only": "参考",
+  };
+  return map[raw] || raw;
 }
 
 function topStatusBlock(row) {

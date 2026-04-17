@@ -161,16 +161,18 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/ops/am/status-counts":
             rows = read_csv_dicts(CSV_FILES["contract_cases"])
             out = {
-                "submitted_in_review": 0,
                 "pending_cm_confirm": 0,
                 "pending_ca_sign": 0,
                 "pending_cm_send": 0,
                 "pending_cm_archive": 0,
                 "completed": 0,
+                "archive_exception": 0,
             }
             for row in rows:
                 key = status_bucket(row.get("execution_status", ""))
-                if key in out:
+                if key == "submitted_in_review":
+                    out["pending_cm_confirm"] += 1
+                elif key in out:
                     out[key] += 1
             return self._send_json(200, out)
 
@@ -178,8 +180,10 @@ class Handler(BaseHTTPRequestHandler):
             rows = read_csv_dicts(CSV_FILES["contract_cases"])
             out = {
                 "pending_cm_confirm": 0,
+                "pending_ca_sign": 0,
                 "pending_cm_send": 0,
                 "pending_cm_archive": 0,
+                "completed": 0,
                 "archive_exception": 0,
                 "recent_items": [],
             }

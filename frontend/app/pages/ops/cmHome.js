@@ -1,10 +1,12 @@
 import { fetchJson } from "../../shared/api.js";
-import { renderCards, renderTaskBar, safeText } from "../../shared/ui.js";
+import { renderCards, renderTaskBar } from "../../shared/ui.js";
 
 const cmStatusCards = [
   { key: "pending_cm_confirm", title: "待CM确认" },
-  { key: "pending_cm_send", title: "待CM寄送" },
+  { key: "pending_ca_sign", title: "待CA签字" },
+  { key: "pending_cm_send", title: "待CM寄出" },
   { key: "pending_cm_archive", title: "待CM归档" },
+  { key: "completed", title: "关闭-已归档" },
   { key: "archive_exception", title: "关闭-归档异常" },
 ];
 
@@ -21,20 +23,8 @@ export default {
     }));
 
     return `
-      ${renderTaskBar("先处理待CM确认/待CM归档，再处理寄送与异常闭环。")}
+      ${renderTaskBar("先处理待CM确认/待CM归档，再处理寄出与异常闭环。")}
       <div id="cm-home-cards">${renderCards(cards)}</div>
-      <div class="focus-panel">
-        <h3>最近待处理</h3>
-        ${summary.recent_items?.length
-          ? `<ul>${summary.recent_items
-              .map(
-                (r) => `<li>${safeText(r.contract_case_id)} ｜ ${safeText(r.formal_contract_id || "未编号")} ｜ ${safeText(r.customer_name)} ｜ ${safeText(
-                  r.execution_status
-                )}</li>`
-              )
-              .join("")}</ul>`
-          : '<div class="empty-note">暂无待处理记录</div>'}
-      </div>
     `;
   },
   bind() {

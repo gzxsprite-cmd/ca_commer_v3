@@ -1,12 +1,12 @@
 import { renderCards, renderTaskBar, safeText } from "../../shared/ui.js";
 
 const statusCards = [
-  { key: "submitted_in_review", title: "提交在审的" },
   { key: "pending_cm_confirm", title: "待CM确认的" },
   { key: "pending_ca_sign", title: "待CA签字的" },
-  { key: "pending_cm_send", title: "待CM寄送的" },
+  { key: "pending_cm_send", title: "待CM寄出的" },
   { key: "pending_cm_archive", title: "待CM归档的" },
   { key: "completed", title: "已完成的" },
+  { key: "archive_exception", title: "关闭-有异常" },
 ];
 
 export default {
