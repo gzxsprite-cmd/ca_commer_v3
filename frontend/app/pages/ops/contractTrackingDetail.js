@@ -152,6 +152,7 @@ export default {
     }
 
     const mainDisplayId = row.formal_contract_id || row.contract_case_id || "-";
+    const isExceptionClosed = statusKey(row.execution_status) === "archive_exception";
 
     return `
       ${renderTaskBar("合同跟进详情：上层状态、中层信息、下层版本与CM动作区。")}
@@ -188,6 +189,17 @@ export default {
       </section>
 
       ${cmActionBlock(row, isCm)}
+
+      ${
+        isExceptionClosed
+          ? `<section class="focus-panel" style="margin-top:10px;">
+              <h4>异常关闭说明</h4>
+              <p><strong>当前状态：</strong>${safeText(cnStatus(row.execution_status))}</p>
+              <p><strong>系统识别异常原因：</strong>${safeText(row.comparison_diff || "未记录系统异常原因")}</p>
+              <p><strong>CM异常备注：</strong>${safeText(row.exception_reason || "未填写")}</p>
+            </section>`
+          : ""
+      }
 
       <dialog id="snapshot-modal" style="width:88vw;max-width:1100px;">
         <div class="actions" style="justify-content:space-between;align-items:center;">
