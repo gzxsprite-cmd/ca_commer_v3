@@ -48,6 +48,12 @@ function canDownloadWatermark(row) {
   return stage !== "pending_cm_confirm" && Boolean(String(row.watermarked_pdf_path || "").trim());
 }
 
+function nextStepDisplay(row) {
+  const stage = statusKey(row.execution_status);
+  if (stage === "pending_cm_archive" || String(row.current_step || "").includes("CM 归档")) return "关闭";
+  return row.next_step_label || row.next_step || "-";
+}
+
 function topStatusBlock(row) {
   const mainId = row.formal_contract_id || row.contract_case_id || "-";
   const idKind = row.formal_contract_id ? "正式合同号" : "Dummy合同号";
@@ -58,9 +64,9 @@ function topStatusBlock(row) {
       <div style="display:grid;grid-template-columns:1fr;gap:8px;">
         <div><strong>合同号：</strong>${safeText(mainId)} <span class="badge">${safeText(idKind)}</span></div>
       </div>
-      <p style="margin-top:6px;"><strong>链路：</strong>AM登记 → CM校验 → CA签字 → CM寄送 → CM归档</p>
+      <p style="margin-top:6px;"><strong>链路：</strong>AM登记 → CM校验 → CA签字 → CM寄出 → CM归档</p>
       <p><strong>当前步骤：</strong>${safeText(row.current_step || "-")} ｜ <strong>当前责任人：</strong>${safeText(row.current_owner_role || "-")} ｜ <strong>下一步：</strong>${safeText(
-    row.next_step_label || row.next_step || "-"
+    nextStepDisplay(row)
   )}</p>
       <p><strong>当前状态：</strong><span class="badge ${badgeClass(statusText)}">${safeText(statusText)}</span></p>
     </section>
@@ -68,6 +74,14 @@ function topStatusBlock(row) {
 }
 
 function middleInfoBlock(row) {
+  const rawTotal = Number(row.total_amount || 0);
+  const taxRateText = String(row.tax_rate || "13%");
+  const taxRateNum = Number.parseFloat(taxRateText.replace("%", "")) || 13;
+  const postTax = row.post_tax_amount || (rawTotal ? rawTotal.toFixed(2) : "-");
+  const preTax = row.pre_tax_amount || (rawTotal ? (rawTotal / (1 + taxRateNum / 100)).toFixed(2) : "-");
+  const allocationText = String(row.allocation_summary || "");
+  const projectAlloc = allocationText.split(";").find((x) => x.trim().toUpperCase().startsWith("PMS-")) || "未标注";
+  const bufferAlloc = allocationText.split(";").find((x) => x.trim().toUpperCase().startsWith("BUFFER:")) || "BUFFER:0";
   return `
     <section class="focus-panel" style="margin-top:10px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
@@ -77,14 +91,18 @@ function middleInfoBlock(row) {
           <p><strong>项目名：</strong>${safeText(row.project_name || "-")}</p>
           <p><strong>产品名：</strong>${safeText(row.product_name || "-")}</p>
           <p><strong>合同名：</strong>${safeText(row.contract_name || "-")}</p>
+          <p><strong>合同总金额：</strong>${safeText(row.total_amount || "-")}</p>
+          <p><strong>分期节点与比例：</strong>${safeText(row.payment_terms || "-")}</p>
+          <p><strong>税前金额：</strong>${safeText(preTax)}</p>
+          <p><strong>税后金额：</strong>${safeText(postTax)}</p>
+          <p><strong>税率：</strong>${safeText(taxRateText)}</p>
         </div>
         <div>
           ${renderTags("SE3匹配信息", row.se3_summary)}
           ${renderTags("PMS匹配信息", row.pms_summary)}
           <h4>金额分配信息</h4>
-          <p><strong>合同金额：</strong>${safeText(row.total_amount || "-")}</p>
-          <p><strong>支付节点与比例：</strong>${safeText(row.payment_terms || "-")}</p>
-          <p><strong>分配摘要：</strong>${safeText(row.allocation_summary || "-")}</p>
+          <p><strong>分配到项目：</strong>${safeText(projectAlloc)}</p>
+          <p><strong>非项目 Buffer：</strong>${safeText(bufferAlloc)}</p>
         </div>
       </div>
     </section>
@@ -300,7 +318,7 @@ export default {
     }
 
     if (currentStatus === "pending_ca_sign") {
-      addButton("cm-to-send", "切换到CM寄送", () => doAction("cm_to_send", {}, "已切换到待CM寄送"));
+      addButton("cm-to-send", "切换到CM寄出", () => doAction("cm_to_send", {}, "已切换到待CM寄出"));
       addButton(
         "cm-upload-single",
         "上传CA单签备份",
@@ -326,6 +344,26 @@ export default {
             "cm_upload_dual_signed",
             { dual_signed_archive_file: file, comparison_status: same ? "ok" : "warning", comparison_diff: diff || "" },
             "双签备份上传成功，已进入待CM归档"
+          );
+        },
+        false
+      );
+      return;
+    }
+
+    if (currentStatus === "pending_cm_archive" && !hasDual(row)) {
+      addButton(
+        "cm-upload-dual-archive",
+        "上传客户双签备份",
+        () => {
+          const file = prompt("输入双签归档文件名（演示）", "dual_signed_returned.pdf");
+          if (!file) return;
+          const same = confirm("内容是否完全一致？确定=无误，取消=存在差异");
+          const diff = same ? "" : prompt("请填写差异说明（页码+差异内容）", "第2页金额条款文字差异");
+          doAction(
+            "cm_upload_dual_signed",
+            { dual_signed_archive_file: file, comparison_status: same ? "ok" : "warning", comparison_diff: diff || "" },
+            "双签备份上传成功，已进入待CM归档比对"
           );
         },
         false

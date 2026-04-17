@@ -6,7 +6,7 @@ const statusOptions = [
   { value: "", label: "全部状态" },
   { value: "pending_cm_confirm", label: "待CM确认" },
   { value: "pending_ca_sign", label: "待CA签字" },
-  { value: "pending_cm_send", label: "待CM寄送" },
+  { value: "pending_cm_send", label: "待CM寄出" },
   { value: "pending_cm_archive", label: "待CM归档" },
   { value: "completed", label: "关闭-已归档" },
   { value: "archive_exception", label: "关闭-归档异常" },
@@ -25,7 +25,7 @@ function compactOneToMany(text) {
 function renderCmAction(row) {
   const st = row.execution_status;
   if (st === "pending_ca_sign") {
-    return `<button class="secondary cm-send-btn" data-id="${safeText(row.contract_case_id)}">切到待CM寄送</button>`;
+    return `<button class="secondary cm-send-btn" data-id="${safeText(row.contract_case_id)}">切换到CM寄出</button>`;
   }
   if (st === "pending_cm_archive") {
     return `<span class="badge">需进入详情归档</span>`;
@@ -36,10 +36,9 @@ function renderCmAction(row) {
 function renderRow(row, isCm) {
   const status = cnStatus(row.execution_status || "");
   const stage = row.execution_status === "submitted_in_review" ? "pending_cm_confirm" : row.execution_status;
-  const formalId = stage === "pending_cm_confirm" ? "" : row.formal_contract_id || "";
+  const contractId = stage === "pending_cm_confirm" ? row.contract_case_id || "" : row.formal_contract_id || row.contract_case_id || "";
   return `<tr>
-    <td>${safeText(row.contract_case_id || "-")}</td>
-    <td>${safeText(formalId || "-")}</td>
+    <td>${safeText(contractId || "-")}</td>
     <td>${safeText(row.customer_name || "-")}</td>
     <td>${safeText(row.project_name || "-")}</td>
     <td>${safeText(row.product_name || "-")}</td>
@@ -77,11 +76,11 @@ export default {
       <div class="table-wrap" style="margin-top:10px;">
         <table class="table">
           <thead><tr>
-            <th>Dummy合同号</th><th>正式合同号</th><th>客户名</th><th>项目名</th><th>产品名</th><th>报价单匹配摘要</th><th>PMS匹配摘要</th><th>金额/支付节点摘要</th><th>流转状态</th><th>${
+            <th>合同号</th><th>客户名</th><th>项目名</th><th>产品名</th><th>报价单匹配摘要</th><th>PMS匹配摘要</th><th>金额/支付节点摘要</th><th>流转状态</th><th>${
               isCm ? "轻量操作" : "操作"
             }</th><th>详情</th>
           </tr></thead>
-          <tbody id="tracking-list-body"><tr><td colspan="11" class="empty-note">加载中...</td></tr></tbody>
+          <tbody id="tracking-list-body"><tr><td colspan="10" class="empty-note">加载中...</td></tr></tbody>
         </table>
       </div>
     `;
@@ -99,7 +98,7 @@ export default {
       body.querySelectorAll(".cm-send-btn").forEach((btn) => {
         btn.onclick = async () => {
           const contractId = btn.dataset.id;
-          const needBackup = confirm("是否先上传CA单签备份？点击“确定”进入详情上传；点击“取消”直接切到待CM寄送。");
+          const needBackup = confirm("是否先上传CA单签备份？点击“确定”进入详情上传；点击“取消”直接切到待CM寄出。");
           if (needBackup) {
             location.hash = `/ops/contracts/tracking/detail?id=${encodeURIComponent(contractId)}&intent=upload-ca-backup`;
             return;
@@ -117,7 +116,7 @@ export default {
       cachedRows = await fetchJson(`/api/ops/contracts/tracking?${params.toString()}`, []);
       body.innerHTML = cachedRows.length
         ? cachedRows.map((row) => renderRow(row, isCm)).join("")
-        : '<tr><td colspan="11" class="empty-note">暂无匹配记录</td></tr>';
+        : '<tr><td colspan="10" class="empty-note">暂无匹配记录</td></tr>';
       bindCmActions();
     };
 

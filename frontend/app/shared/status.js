@@ -6,7 +6,7 @@ export const statusLabel = {
   cm_in_review: "待CM确认",
   pending_ca_sign: "待CA签字",
   ca_pending_signature: "待CA签字",
-  pending_cm_send: "待CM寄送",
+  pending_cm_send: "待CM寄出",
   pending_cm_archive: "待CM归档",
   completed: "关闭-已归档",
   execution_closed: "关闭-已归档",
@@ -38,6 +38,7 @@ export function badgeClass(text) {
     normalized.includes("待CM确认") ||
     normalized.includes("待CA签字") ||
     normalized.includes("待CM寄送") ||
+    normalized.includes("待CM寄出") ||
     normalized.includes("待CM归档")
   ) {
     return "status-info";

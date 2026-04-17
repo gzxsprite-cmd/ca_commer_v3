@@ -364,7 +364,7 @@ class Handler(BaseHTTPRequestHandler):
             pms_matches = payload.get("pms_matches", [])
             allocations = payload.get("allocations", {})
 
-            flow_chain = "AM提交 -> CM校验 -> CA签字 -> CM寄送 -> CM归档"
+            flow_chain = "AM提交 -> CM校验 -> CA签字 -> CM寄出 -> CM归档"
             new_case = {
                 "contract_case_id": contract_id,
                 "contract_code": payload.get("contract_code", contract_id),
@@ -411,7 +411,7 @@ class Handler(BaseHTTPRequestHandler):
                 {
                     "ok": True,
                     "contract_case_id": contract_id,
-                    "flow_chain": ["CM 校验", "CA 签字", "CM 寄送合同", "CM 归档合同"],
+                    "flow_chain": ["CM 校验", "CA 签字", "CM 寄出合同", "CM 归档合同"],
                 },
             )
 
@@ -438,8 +438,8 @@ class Handler(BaseHTTPRequestHandler):
             elif action == "cm_to_send":
                 row["execution_status"] = "pending_cm_send"
                 row["current_owner_role"] = "CM"
-                row["next_step_label"] = "CM寄送"
-                row["current_step"] = "CM 寄送"
+                row["next_step_label"] = "CM寄出"
+                row["current_step"] = "CM 寄出"
                 row["next_step"] = "CM 归档"
                 if payload.get("ca_single_sign_backup"):
                     row["ca_single_sign_backup"] = payload.get("ca_single_sign_backup")
