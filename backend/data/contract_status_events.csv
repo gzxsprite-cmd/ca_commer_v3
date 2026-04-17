@@ -1,0 +1,4 @@
+event_id,contract_case_id,event_type,event_status,event_time,actor_role
+EV-001,CC-001,submitted,submitted,2026-04-01T08:00:00,AM
+EV-002,CC-001,cm_reviewed,cm_in_review,2026-04-02T09:00:00,CM
+EV-003,CC-001,ca_pending_signature,ca_pending_signature,2026-04-03T10:00:00,CM
