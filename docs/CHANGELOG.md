@@ -81,3 +81,8 @@
 - Upgraded 合同跟进详情页 with CM contextual actions: 确认完毕, 下载带水印PDF(placeholder), 可选CA单签备份上传, 双签归档上传, 确认无误归档, 关闭-归档异常(必填原因).
 - Added minimal backend CM action endpoint and home summary endpoint; synchronized status progression on shared contract records for AM-side visibility.
 - Added contract-case extension fields for CM execution artifacts (watermark file path, backup/archive files, comparison status/diff, exception reason).
+
+## 2026-04-17 — CSV 表结构与关联关系中文梳理补充
+- 新增 `docs/CSV_TABLE_SCHEMA_RELATIONSHIP_CN.md`，按当前 `backend/data/*.csv` 逐表补充中文说明。
+- 明确每张表的业务含义、字段含义、以及关联关系含义（含强关联与弱关联边界）。
+- 增补合同主线、开票/应收链路、工作区-角色-导航可见性三类关系的中文总览，便于产品/研发对齐。
