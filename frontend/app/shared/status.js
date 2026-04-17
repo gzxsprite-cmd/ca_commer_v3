@@ -31,6 +31,17 @@ export function cnStatus(raw) {
 
 export function badgeClass(text) {
   if (!text) return "status-info";
+  const normalized = String(text);
+  if (normalized.includes("关闭-已归档")) return "status-success";
+  if (normalized.includes("关闭-归档异常") || normalized.includes("关闭-有异常")) return "status-warning";
+  if (
+    normalized.includes("待CM确认") ||
+    normalized.includes("待CA签字") ||
+    normalized.includes("待CM寄送") ||
+    normalized.includes("待CM归档")
+  ) {
+    return "status-info";
+  }
   if (text.includes("风险") || text.includes("阻塞") || text.includes("逾期")) return "status-danger";
   if (text.includes("待") || text.includes("评估") || text.includes("审核")) return "status-warning";
   if (text.includes("已") || text.includes("完成") || text.includes("关闭") || text.includes("清")) return "status-success";

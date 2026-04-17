@@ -1,5 +1,5 @@
 import { fetchJson, postJson } from "../../shared/api.js";
-import { cnStatus } from "../../shared/status.js";
+import { badgeClass, cnStatus } from "../../shared/status.js";
 import { renderTaskBar, safeText } from "../../shared/ui.js";
 
 const DRAFT_PDF = "/assets/contracts/draft_sample.pdf";
@@ -49,18 +49,20 @@ function canDownloadWatermark(row) {
 }
 
 function topStatusBlock(row) {
+  const mainId = row.formal_contract_id || row.contract_case_id || "-";
+  const idKind = row.formal_contract_id ? "正式合同号" : "Dummy合同号";
+  const statusText = cnStatus(row.execution_status);
   return `
     <section class="focus-panel" style="margin-top:10px;">
       <h4>合同流转状态</h4>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div><strong>Dummy ID：</strong>${safeText(row.contract_case_id || "-")}</div>
-        <div><strong>Official ID：</strong>${safeText(row.formal_contract_id || "未生成")}</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+        <div><strong>合同号：</strong>${safeText(mainId)} <span class="badge">${safeText(idKind)}</span></div>
       </div>
       <p style="margin-top:6px;"><strong>链路：</strong>AM登记 → CM校验 → CA签字 → CM寄送 → CM归档</p>
       <p><strong>当前步骤：</strong>${safeText(row.current_step || "-")} ｜ <strong>当前责任人：</strong>${safeText(row.current_owner_role || "-")} ｜ <strong>下一步：</strong>${safeText(
     row.next_step_label || row.next_step || "-"
   )}</p>
-      <p><strong>当前状态：</strong><span class="badge">${safeText(cnStatus(row.execution_status))}</span></p>
+      <p><strong>当前状态：</strong><span class="badge ${badgeClass(statusText)}">${safeText(statusText)}</span></p>
     </section>
   `;
 }
@@ -68,19 +70,23 @@ function topStatusBlock(row) {
 function middleInfoBlock(row) {
   return `
     <section class="focus-panel" style="margin-top:10px;">
-      <h4>合同基础信息</h4>
-      <p><strong>客户名：</strong>${safeText(row.customer_name || "-")}</p>
-      <p><strong>项目名：</strong>${safeText(row.project_name || "-")}</p>
-      <p><strong>产品名：</strong>${safeText(row.product_name || "-")}</p>
-      <p><strong>合同名：</strong>${safeText(row.contract_name || "-")}</p>
-
-      ${renderTags("SE3匹配信息", row.se3_summary)}
-      ${renderTags("PMS匹配信息", row.pms_summary)}
-
-      <h4>金额分配信息</h4>
-      <p><strong>合同金额：</strong>${safeText(row.total_amount || "-")}</p>
-      <p><strong>支付节点与比例：</strong>${safeText(row.payment_terms || "-")}</p>
-      <p><strong>分配摘要：</strong>${safeText(row.allocation_summary || "-")}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
+        <div>
+          <h4>合同基础信息</h4>
+          <p><strong>客户名：</strong>${safeText(row.customer_name || "-")}</p>
+          <p><strong>项目名：</strong>${safeText(row.project_name || "-")}</p>
+          <p><strong>产品名：</strong>${safeText(row.product_name || "-")}</p>
+          <p><strong>合同名：</strong>${safeText(row.contract_name || "-")}</p>
+        </div>
+        <div>
+          ${renderTags("SE3匹配信息", row.se3_summary)}
+          ${renderTags("PMS匹配信息", row.pms_summary)}
+          <h4>金额分配信息</h4>
+          <p><strong>合同金额：</strong>${safeText(row.total_amount || "-")}</p>
+          <p><strong>支付节点与比例：</strong>${safeText(row.payment_terms || "-")}</p>
+          <p><strong>分配摘要：</strong>${safeText(row.allocation_summary || "-")}</p>
+        </div>
+      </div>
     </section>
   `;
 }
@@ -117,12 +123,12 @@ export default {
       return `${renderTaskBar("返回列表重新选择合同。")}<div class="empty-note">未找到合同详情。</div><div class="actions"><a href="#/ops/contracts/tracking"><button class="secondary">返回列表</button></a></div>`;
     }
 
-    const compareReady = comparisonReady(row);
+    const mainDisplayId = row.formal_contract_id || row.contract_case_id || "-";
 
     return `
       ${renderTaskBar("合同跟进详情：上层状态、中层信息、下层版本与CM动作区。")}
       <div class="actions" style="justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;">合同跟进详情：${safeText(row.contract_case_id)}</h3>
+        <h3 style="margin:0;">合同跟进详情：${safeText(mainDisplayId)}</h3>
         <a href="#/ops/contracts/tracking"><button class="secondary">返回列表</button></a>
       </div>
 
@@ -154,16 +160,6 @@ export default {
       </section>
 
       ${cmActionBlock(row, isCm)}
-
-      ${
-        compareReady
-          ? `<section class="focus-panel" style="margin-top:10px;">
-              <h4>归档比较结果</h4>
-              <p>${comparisonBadge(row)}</p>
-              <p><strong>差异说明：</strong>${safeText(row.comparison_diff || "-")}</p>
-            </section>`
-          : ""
-      }
 
       <dialog id="snapshot-modal" style="width:88vw;max-width:1100px;">
         <div class="actions" style="justify-content:space-between;align-items:center;">
