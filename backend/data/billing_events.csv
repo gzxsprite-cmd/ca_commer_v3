@@ -1,0 +1,2 @@
+billing_event_id,billing_date,amount,allocation_status,linked_contract_case_ids
+BE-001,2026-04-05,20000,allocated_to_contracts,CC-001
