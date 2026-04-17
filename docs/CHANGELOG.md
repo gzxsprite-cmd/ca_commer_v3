@@ -99,3 +99,8 @@
 - Added `docs/POST_REFACTOR_CONTRACT_SCHEMA_AUDIT.md` to audit current CSV reality vs agreed contract-domain target structure.
 - Classified each expected table as fully/partially/unused based on actual CSV headers and backend/frontend runtime usage.
 - Recorded post-split gaps (legacy compatibility paths, weak runtime usage tables, seed inconsistencies) without redesigning model scope.
+
+## 2026-04-17 — CM开票计划与实际执行数据模型文档
+- Added `docs/CM_BILLING_PLAN_AND_ACTUAL_DATA_MODEL.md` as a scoped modeling freeze for CM billing monthly plan + actual execution.
+- Clarified local ER chain anchored on `Customer_Project`, with `Contract` attached to `Customer_Project` in this scope.
+- Documented entity fields, PK/FK assumptions, uniqueness suggestions, fact/summary/scenario table classification, and explicit out-of-scope boundaries.
