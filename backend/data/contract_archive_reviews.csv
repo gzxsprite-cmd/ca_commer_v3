@@ -1,0 +1,7 @@
+archive_review_id,contract_case_id,comparison_base_document_type,comparison_target_document_type,comparison_status,diff_summary,diff_page_refs,reviewed_by_role,reviewed_at
+AR-0001,DMY-20260410-0001,draft,dual_signed,pending,,,CM,2026-04-10T08:00:00
+AR-0002,DMY-20260410-0002,draft,dual_signed,pending,,,CM,2026-04-10T09:00:00
+AR-0003,DMY-20260410-0003,draft,dual_signed,pending,,,CM,2026-04-10T10:00:00
+AR-0004,DMY-20260410-0004,draft,dual_signed,pending,,,CM,2026-04-10T11:00:00
+AR-0005,DMY-20260410-0005,draft,dual_signed,pending,,,CM,2026-04-10T12:00:00
+AR-0006,DMY-20260410-0006,draft,dual_signed,pending,,,CM,2026-04-10T13:00:00
