@@ -46,12 +46,14 @@ export default {
     return `
       ${renderTaskBar("本页优先呈现选定年月的计划生成事项，再展示计划外事项（AM/PjM/CM手动）。")}
       ${subNav("list")}
-      <div class="compact-filter-bar" style="grid-template-columns: 170px 160px 170px 170px auto auto;">
+      <div class="compact-filter-bar" style="grid-template-columns: 170px 150px 150px 160px 170px 170px auto auto;">
         <input id="f-year-month" type="month" value="${safeText(ym)}" />
         <select id="f-status">${statusOptions
           .map(([v, l]) => `<option value="${v}" ${query.get("status") === v ? "selected" : ""}>${l}</option>`)
           .join("")}</select>
-        <input id="f-customer" placeholder="客户" value="${safeText(query.get("customer") || "")}" />
+        <input id="f-customer" placeholder="客户筛选" value="${safeText(query.get("customer") || "")}" />
+        <input id="f-product" placeholder="产品筛选" value="${safeText(query.get("product") || "")}" />
+        <input id="f-project" placeholder="项目名关键词" value="${safeText(query.get("project") || "")}" />
         <input id="f-contract" placeholder="合同号" value="${safeText(query.get("contract") || "")}" />
         <button id="f-apply">查询</button>
         <button id="goto-new" class="secondary">CM手动新建</button>
@@ -84,7 +86,7 @@ export default {
       const p = new URLSearchParams();
       const ym = document.getElementById("f-year-month")?.value || defaultYearMonth();
       p.set("year_month", ym);
-      ["status", "customer", "contract"].forEach((k) => {
+      ["status", "customer", "product", "project", "contract"].forEach((k) => {
         const v = document.getElementById(`f-${k}`)?.value?.trim();
         if (v) p.set(k, v);
       });
@@ -123,7 +125,9 @@ export default {
             billing_task_id: btn.dataset.id,
             target_status: btn.dataset.next,
           });
-          load();
+          const statusCell = btn.closest("tr")?.querySelector("td:nth-child(8) .badge");
+          if (statusCell) statusCell.textContent = billingStepLabel(btn.dataset.next, "");
+          btn.remove();
         };
       });
     };

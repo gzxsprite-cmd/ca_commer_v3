@@ -657,6 +657,10 @@ class Handler(BaseHTTPRequestHandler):
             ensure_plan_generated_tasks()
             year = query.get("year", [datetime.utcnow().strftime("%Y")])[0]
             ym = query.get("year_month", [""])[0].strip()
+            customer = query.get("customer", [""])[0].strip()
+            product = query.get("product", [""])[0].strip()
+            project = query.get("project", [""])[0].strip()
+            contract = query.get("contract", [""])[0].strip()
             tasks = [r for r in read_csv_dicts(CSV_FILES["billing_tasks"]) if r.get("year") == year]
             groups: dict[str, dict[str, list[dict[str, str]]]] = {}
             for t in tasks:
@@ -667,6 +671,14 @@ class Handler(BaseHTTPRequestHandler):
                         y, m = parts
                         if t.get("year") != y or month != m:
                             continue
+                if customer and not contains(t.get("customer_name", ""), customer):
+                    continue
+                if product and not contains(t.get("product_type", ""), product):
+                    continue
+                if project and not contains(t.get("project_name", ""), project):
+                    continue
+                if contract and not contains(t.get("contract_no", ""), contract):
+                    continue
                 key = t.get("customer_name", "Unknown")
                 row = {
                     "billing_task_id": t.get("billing_task_id", ""),
@@ -690,6 +702,8 @@ class Handler(BaseHTTPRequestHandler):
             rows = read_csv_dicts(CSV_FILES["billing_tasks"])
             status = query.get("status", [""])[0].strip()
             customer = query.get("customer", [""])[0].strip()
+            product = query.get("product", [""])[0].strip()
+            project = query.get("project", [""])[0].strip()
             contract = query.get("contract", [""])[0].strip()
             year_month = query.get("year_month", [datetime.utcnow().strftime("%Y-%m")])[0].strip()
             must = query.get("must_billing", [""])[0].strip()
@@ -698,6 +712,10 @@ class Handler(BaseHTTPRequestHandler):
                 if status and r.get("status_code") != status:
                     return False
                 if customer and not contains(r.get("customer_name", ""), customer):
+                    return False
+                if product and not contains(r.get("product_type", ""), product):
+                    return False
+                if project and not contains(r.get("project_name", ""), project):
                     return False
                 if contract and not contains(r.get("contract_no", ""), contract):
                     return False
@@ -715,8 +733,13 @@ class Handler(BaseHTTPRequestHandler):
                 [r for r in rows if match(r)],
                 key=lambda x: (
                     0 if x.get("source_type") == "plan_generated" else 1,
-                    1 if x.get("status_code") in {"closed", "partial_closed"} else 0,
-                    x.get("updated_at", ""),
+                    x.get("year", ""),
+                    x.get("month", ""),
+                    x.get("customer_name", ""),
+                    x.get("project_name", ""),
+                    x.get("product_type", ""),
+                    x.get("contract_no", ""),
+                    x.get("billing_task_id", ""),
                 ),
             )
             return self._send_json(200, out)

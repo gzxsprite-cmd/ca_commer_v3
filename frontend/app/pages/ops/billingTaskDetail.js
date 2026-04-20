@@ -52,7 +52,7 @@ export default {
       <section class="focus-panel" style="margin-top:10px;">
         <div class="form-grid">
           <div><strong>来源：</strong>${safeText(row.source_type)}</div>
-          <div><strong>当前状态：</strong><span class="badge ${billingBadgeClass(row.status_code)}">${safeText(
+          <div><strong>当前状态：</strong><span id="detail-status-badge" class="badge ${billingBadgeClass(row.status_code)}">${safeText(
       billingStepLabel(row.status_code, row.status_label)
     )}</span></div>
           <div><strong>当前责任人：</strong>${safeText(row.current_owner || "CM")}</div>
@@ -74,7 +74,7 @@ export default {
 
       <section class="decision-panel" style="margin-top:10px;">
         <h4>步骤推进</h4>
-        <div class="chip-row">${flowCn
+        <div id="detail-step-chips" class="chip-row">${flowCn
           .map((n, idx) => `<span class="badge ${idx <= (row.status_idx || 0) ? "status-info" : "status-neutral"}">${n}</span>`)
           .join(" ")}</div>
         <div class="actions" style="margin-top:10px;">
@@ -84,9 +84,7 @@ export default {
         <div id="progress-msg"></div>
       </section>
 
-      ${
-        showStep4
-          ? `<section class="focus-panel" style="margin-top:10px;">
+      <section id="step4-panel" class="focus-panel" style="margin-top:10px;${showStep4 ? "" : "display:none;"}">
         <h4>Step 4 开票声明和预约（必填后可关闭）</h4>
         <div class="form-grid">
           <div class="form-item"><label>Workon号（必填）</label><input id="workon-no" value="${safeText(row.workon_no || "")}" /></div>
@@ -102,9 +100,7 @@ export default {
           <input id="partial-reason" placeholder="部分关闭原因（仅部分关闭必填）" />
           <span id="close-msg"></span>
         </div>
-      </section>`
-          : ""
-      }
+      </section>
     `;
   },
   bind({ query }) {
@@ -130,8 +126,16 @@ export default {
         target_status: target,
         completion_time: document.getElementById("done-time").value,
       });
-      document.getElementById("progress-msg").textContent = `已推进到 ${target}`;
-      setTimeout(() => location.reload(), 400);
+      const statusBadge = document.getElementById("detail-status-badge");
+      if (statusBadge) {
+        statusBadge.className = `badge ${billingBadgeClass(target)}`;
+        statusBadge.textContent = billingStepLabel(target, "");
+      }
+      if (target === "declaration_booked") {
+        const panel = document.getElementById("step4-panel");
+        if (panel) panel.style.display = "block";
+      }
+      document.getElementById("progress-msg").textContent = `已推进到 ${billingStepLabel(target, "")}`;
     };
 
     const close = async (partial) => {
@@ -145,7 +149,7 @@ export default {
         partial_reason: document.getElementById("partial-reason")?.value || "",
       });
       document.getElementById("close-msg").textContent = partial ? "已部分关闭并回写实际。" : "已关闭并回写实际。";
-      setTimeout(() => location.reload(), 500);
+      setTimeout(() => (location.hash = "/ops/billing/tasks"), 500);
     };
 
     const fullBtn = document.getElementById("close-full");
