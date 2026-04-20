@@ -160,6 +160,7 @@ select {
 .badge.status-warning { color: var(--warning); border-color: #f8d3a6; background: #fff7ed; }
 .badge.status-danger { color: var(--danger); border-color: #f6c3c3; background: #fef2f2; }
 .badge.status-info { color: var(--primary); border-color: #c7d8ff; background: #eff6ff; }
+.badge.status-neutral { color: #475467; border-color: #d0d5dd; background: #f2f4f7; }
 
 .table-wrap { overflow: auto; }
 .table {
@@ -364,6 +365,13 @@ button.secondary {
 
 .text-muted {
   color: var(--muted);
+}
+
+.billing-subnav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .matrix-page { padding: 14px; }

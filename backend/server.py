@@ -656,37 +656,32 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/ops/cm/billing/calendar":
             ensure_plan_generated_tasks()
             year = query.get("year", [datetime.utcnow().strftime("%Y")])[0]
-            plans = [r for r in read_csv_dicts(CSV_FILES["contract_monthly_plans"]) if r.get("year") == year]
-            actuals = [r for r in read_csv_dicts(CSV_FILES["contract_monthly_actuals"]) if r.get("year") == year]
-            cp_map = {r.get("customer_project_id"): r for r in read_csv_dicts(CSV_FILES["customer_projects"])}
-            ct_map = {r.get("contract_id"): r for r in read_csv_dicts(CSV_FILES["contracts"])}
+            ym = query.get("year_month", [""])[0].strip()
+            tasks = [r for r in read_csv_dicts(CSV_FILES["billing_tasks"]) if r.get("year") == year]
             groups: dict[str, dict[str, list[dict[str, str]]]] = {}
-            for p in plans:
-                cp = cp_map.get(p.get("customer_project_id"), {})
-                key = cp.get("customer_name", "Unknown")
-                month = p.get("month", "")
+            for t in tasks:
+                month = t.get("month", "")
+                if ym:
+                    parts = ym.split("-")
+                    if len(parts) == 2:
+                        y, m = parts
+                        if t.get("year") != y or month != m:
+                            continue
+                key = t.get("customer_name", "Unknown")
                 row = {
-                    "customer_project_id": p.get("customer_project_id", ""),
-                    "project_name": cp.get("project_name", ""),
-                    "product_type": cp.get("product_type", ""),
-                    "contract_no": ct_map.get(p.get("contract_id"), {}).get("bosch_contract_no", ""),
-                    "plan_amount": p.get("plan_amount", "0"),
-                    "actual_amount": "0",
-                    "deficit": "0",
+                    "billing_task_id": t.get("billing_task_id", ""),
+                    "customer_project_id": t.get("customer_project_id", ""),
+                    "project_name": t.get("project_name", ""),
+                    "product_type": t.get("product_type", ""),
+                    "contract_no": t.get("contract_no", ""),
+                    "plan_amount": t.get("plan_amount", "0"),
+                    "plan_must_billing_amount": t.get("plan_must_billing_amount", "0"),
+                    "actual_amount": t.get("actual_amount", "0"),
+                    "actual_must_billing_amount": t.get("actual_must_billing_amount", "0"),
+                    "status_code": t.get("status_code", "planned"),
+                    "status_label": t.get("status_label", "计划开票"),
+                    "source_type": t.get("source_type", ""),
                 }
-                act = next(
-                    (
-                        a
-                        for a in actuals
-                        if a.get("customer_project_id") == p.get("customer_project_id")
-                        and a.get("contract_id") == p.get("contract_id")
-                        and a.get("month") == month
-                    ),
-                    {},
-                )
-                row["actual_amount"] = act.get("actual_amount", "0")
-                deficit = float(row["plan_amount"] or 0) - float(row["actual_amount"] or 0)
-                row["deficit"] = str(round(deficit, 2) if deficit > 0 else 0)
                 groups.setdefault(key, {}).setdefault(month, []).append(row)
             return self._send_json(200, {"year": year, "groups": groups})
 
@@ -696,7 +691,7 @@ class Handler(BaseHTTPRequestHandler):
             status = query.get("status", [""])[0].strip()
             customer = query.get("customer", [""])[0].strip()
             contract = query.get("contract", [""])[0].strip()
-            source = query.get("source", [""])[0].strip()
+            year_month = query.get("year_month", [datetime.utcnow().strftime("%Y-%m")])[0].strip()
             must = query.get("must_billing", [""])[0].strip()
 
             def match(r: dict[str, str]) -> bool:
@@ -706,13 +701,24 @@ class Handler(BaseHTTPRequestHandler):
                     return False
                 if contract and not contains(r.get("contract_no", ""), contract):
                     return False
-                if source and r.get("source_type") != source:
-                    return False
+                if year_month:
+                    parts = year_month.split("-")
+                    if len(parts) == 2:
+                        y, m = parts
+                        if r.get("year") != y or r.get("month") != m:
+                            return False
                 if must and r.get("must_billing_flag") != must:
                     return False
                 return True
 
-            out = sorted([r for r in rows if match(r)], key=lambda x: x.get("updated_at", ""), reverse=True)
+            out = sorted(
+                [r for r in rows if match(r)],
+                key=lambda x: (
+                    0 if x.get("source_type") == "plan_generated" else 1,
+                    1 if x.get("status_code") in {"closed", "partial_closed"} else 0,
+                    x.get("updated_at", ""),
+                ),
+            )
             return self._send_json(200, out)
 
         if path == "/api/ops/cm/billing/tasks/detail":
@@ -1229,6 +1235,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send_json(400, {"ok": False, "message": "only step4 task can close"})
             if not workon_no or not total_invoice_amount:
                 return self._send_json(400, {"ok": False, "message": "workon_no and total_invoice_amount required"})
+            if not invoice_lines:
+                return self._send_json(400, {"ok": False, "message": "invoice lines required at step4 close"})
 
             row["workon_no"] = workon_no
             row["total_invoice_amount"] = total_invoice_amount

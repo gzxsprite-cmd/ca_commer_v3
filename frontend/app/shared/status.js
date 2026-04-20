@@ -48,3 +48,35 @@ export function badgeClass(text) {
   if (text.includes("已") || text.includes("完成") || text.includes("关闭") || text.includes("清")) return "status-success";
   return "status-info";
 }
+
+export function billingStepLabel(statusCode, statusLabelText = "") {
+  const code = statusCode || "";
+  const stepMap = {
+    planned: 0,
+    customer_confirmed: 1,
+    rb_mapped: 2,
+    settlement_adjusted: 3,
+    declaration_booked: 4,
+    closed: 5,
+    partial_closed: 5,
+  };
+  const cnMap = {
+    planned: "计划开票",
+    customer_confirmed: "客户确认",
+    rb_mapped: "RB内部mapping",
+    settlement_adjusted: "结算调整",
+    declaration_booked: "开票声明和预约",
+    closed: "关闭",
+    partial_closed: "部分关闭",
+  };
+  const step = stepMap[code] ?? 0;
+  const label = statusLabelText || cnMap[code] || code || "-";
+  return `Step ${step} ${label}`;
+}
+
+export function billingBadgeClass(statusCode) {
+  if (statusCode === "planned") return "status-neutral";
+  if (statusCode === "closed") return "status-success";
+  if (statusCode === "partial_closed") return "status-warning";
+  return "status-info";
+}
