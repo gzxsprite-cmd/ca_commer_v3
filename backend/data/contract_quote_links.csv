@@ -1,0 +1,7 @@
+quote_link_id,contract_case_id,snapshot_id,pid,link_source,is_primary
+QL-0001-01,DMY-20260410-0001,SE3-001,PID-8871,legacy_summary,1
+QL-0002-01,DMY-20260410-0002,SE3-002,PID-8872,legacy_summary,1
+QL-0003-01,DMY-20260410-0003,SE3-003,PID-8873,legacy_summary,1
+QL-0004-01,DMY-20260410-0004,SE3-004,PID-8874,legacy_summary,1
+QL-0005-01,DMY-20260410-0005,SE3-005,PID-8875,legacy_summary,1
+QL-0006-01,DMY-20260410-0006,SE3-006,PID-8876,legacy_summary,1
