@@ -333,3 +333,35 @@ button.secondary {
   }
   .archive-preview-frame { height: 420px; }
 }
+
+/* CM billing planning + execution */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.calendar-cell {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+  min-height: 120px;
+}
+
+.calendar-cell h4 {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.calendar-row {
+  border-left: 3px solid #2f6fdf;
+  padding-left: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.text-muted {
+  color: var(--muted);
+}

@@ -18,3 +18,5 @@ plan_targets,目标分解,plan,/plan/targets,5,1
 plan_coverage,成本覆盖,plan,/plan/cost-coverage,6,1
 plan_adjustments,调整申请,plan,/plan/adjustments,7,1
 plan_review,管理复盘看板,plan,/plan/review-dashboard,8,1
+ops_billing_calendar,开票日历,ops,/ops/billing/calendar,11,1
+ops_billing_tasks,开票事项,ops,/ops/billing/tasks,12,1

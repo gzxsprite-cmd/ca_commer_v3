@@ -1,0 +1,3 @@
+actual_row_id,customer_project_id,contract_id,year,month,actual_amount,actual_must_billing_amount,version,source,updated_at
+ACT-202603-001,CP-001,CT-001,2026,03,12000,3000,2026-CF05,seed,2026-03-31T17:00:00
+ACT-202603-002,CP-002,CT-002,2026,03,10000,0,2026-CF05,seed,2026-03-31T17:00:00

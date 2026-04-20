@@ -56,3 +56,9 @@ plan_adjustments,CA,1
 plan_review,SCP,1
 plan_review,CM,1
 plan_review,CA,1
+ops_billing_calendar,AM,0
+ops_billing_calendar,CM,1
+ops_billing_calendar,CA,0
+ops_billing_tasks,AM,0
+ops_billing_tasks,CM,1
+ops_billing_tasks,CA,0

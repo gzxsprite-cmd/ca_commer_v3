@@ -104,3 +104,11 @@
 - Added `docs/CM_BILLING_PLAN_AND_ACTUAL_DATA_MODEL.md` as a scoped modeling freeze for CM billing monthly plan + actual execution.
 - Clarified local ER chain anchored on `Customer_Project`, with `Contract` attached to `Customer_Project` in this scope.
 - Documented entity fields, PK/FK assumptions, uniqueness suggestions, fact/summary/scenario table classification, and explicit out-of-scope boundaries.
+
+## 2026-04-20 — CM开票计划与实际执行流程落地（Stage-1 scoped）
+- Added CM-scoped billing planning and execution slice without touching unrelated contract flows.
+- Added plan workspace CM billing plan maintenance page (demo upload + yearly plan/actual grid view).
+- Added ops workspace CM billing calendar view, billing task list, and billing task detail progression/close flow.
+- Added CM home billing reminder block (this month task count/amount/completed count) with jump to 开票事项.
+- Added CSV-backed scoped objects: `customer_projects`, `contracts`, `contract_monthly_plans`, `contract_monthly_actuals`, `billing_tasks`.
+- Added scoped CM billing APIs for plan upload/grid, calendar, task list/detail, task progression, and close/partial-close with actual writeback.

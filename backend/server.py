@@ -35,6 +35,11 @@ CSV_FILES = {
     "contract_archive_versions": DATA_DIR / "contract_archive_versions.csv",  # legacy compatibility
     "billing_plans": DATA_DIR / "billing_plans.csv",
     "billing_events": DATA_DIR / "billing_events.csv",
+    "customer_projects": DATA_DIR / "customer_projects.csv",
+    "contracts": DATA_DIR / "contracts.csv",
+    "contract_monthly_plans": DATA_DIR / "contract_monthly_plans.csv",
+    "contract_monthly_actuals": DATA_DIR / "contract_monthly_actuals.csv",
+    "billing_tasks": DATA_DIR / "billing_tasks.csv",
     "contract_balances": DATA_DIR / "contract_balances.csv",
     "receivable_summaries": DATA_DIR / "receivable_summaries.csv",
     "planning_records": DATA_DIR / "planning_records.csv",
@@ -246,6 +251,98 @@ def upsert_archive_review(case_id: str, status: str, diff_summary: str, actor_ro
     else:
         rows.append(payload)
     write_csv_atomic(CSV_FILES["contract_archive_reviews"], rows, list(rows[0].keys()))
+
+
+def now_iso() -> str:
+    return datetime.utcnow().isoformat(timespec="seconds")
+
+
+BILLING_STATUS_FLOW = [
+    "计划开票",
+    "客户确认",
+    "RB内部mapping",
+    "结算调整",
+    "开票声明和预约",
+    "关闭",
+]
+
+
+def status_idx(status_code: str) -> int:
+    mapping = {
+        "planned": 0,
+        "customer_confirmed": 1,
+        "rb_mapped": 2,
+        "settlement_adjusted": 3,
+        "declaration_booked": 4,
+        "closed": 5,
+        "partial_closed": 5,
+    }
+    return mapping.get(status_code, 0)
+
+
+def parse_invoice_lines(raw: str) -> list[dict[str, str]]:
+    try:
+        rows = json.loads(raw or "[]")
+        return rows if isinstance(rows, list) else []
+    except Exception:
+        return []
+
+
+def ensure_plan_generated_tasks() -> None:
+    plans = read_csv_dicts(CSV_FILES["contract_monthly_plans"])
+    tasks = read_csv_dicts(CSV_FILES["billing_tasks"])
+    project_map = {r.get("customer_project_id"): r for r in read_csv_dicts(CSV_FILES["customer_projects"])}
+    contract_map = {r.get("contract_id"): r for r in read_csv_dicts(CSV_FILES["contracts"])}
+    existing_key = {(t.get("source_type"), t.get("contract_id"), t.get("year"), t.get("month")) for t in tasks}
+    changed = False
+    for row in plans:
+        key = ("plan_generated", row.get("contract_id"), row.get("year"), row.get("month"))
+        if key in existing_key:
+            continue
+        cp = project_map.get(row.get("customer_project_id"), {})
+        ct = contract_map.get(row.get("contract_id"), {})
+        task_id = f"BT-{row.get('year', '')}{row.get('month', '')}-{row.get('contract_id', '')[-3:]}"
+        tasks.append(
+            {
+                "billing_task_id": task_id,
+                "source_type": "plan_generated",
+                "status_code": "planned",
+                "status_label": "计划开票",
+                "customer_id": cp.get("customer_id", ""),
+                "customer_name": cp.get("customer_name", ""),
+                "customer_project_id": row.get("customer_project_id", ""),
+                "project_name": cp.get("project_name", ""),
+                "product_type": cp.get("product_type", ""),
+                "contract_id": row.get("contract_id", ""),
+                "contract_no": ct.get("bosch_contract_no", ""),
+                "year": row.get("year", ""),
+                "month": row.get("month", ""),
+                "plan_amount": row.get("plan_amount", "0"),
+                "plan_must_billing_amount": row.get("plan_must_billing_amount", "0"),
+                "actual_amount": "0",
+                "actual_must_billing_amount": "0",
+                "must_billing_flag": "1" if float(row.get("plan_must_billing_amount", "0") or 0) > 0 else "0",
+                "owner_role": "CM",
+                "current_owner": "CM",
+                "next_step": BILLING_STATUS_FLOW[1],
+                "locked_anchor": "1",
+                "workon_no": "",
+                "total_invoice_amount": "",
+                "invoice_lines_json": "[]",
+                "close_type": "",
+                "partial_reason": "",
+                "completion_time_s0": "",
+                "completion_time_s1": "",
+                "completion_time_s2": "",
+                "completion_time_s3": "",
+                "completion_time_s4": "",
+                "created_at": now_iso(),
+                "updated_at": now_iso(),
+            }
+        )
+        changed = True
+    if changed and tasks:
+        write_csv_atomic(CSV_FILES["billing_tasks"], tasks, list(tasks[0].keys()))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -503,6 +600,127 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/ops/billing/plan":
             return self._send_json(200, read_csv_dicts(CSV_FILES["billing_plans"]))
+
+        if path == "/api/cm/billing/plan-grid":
+            year = query.get("year", [datetime.utcnow().strftime("%Y")])[0]
+            plans = [r for r in read_csv_dicts(CSV_FILES["contract_monthly_plans"]) if r.get("year") == year]
+            actuals = [r for r in read_csv_dicts(CSV_FILES["contract_monthly_actuals"]) if r.get("year") == year]
+            rows = []
+            plan_map = {(r.get("customer_project_id"), r.get("contract_id"), r.get("month")): r for r in plans}
+            actual_map = {(r.get("customer_project_id"), r.get("contract_id"), r.get("month")): r for r in actuals}
+            cp_rows = read_csv_dicts(CSV_FILES["customer_projects"])
+            ct_map = {r.get("contract_id"): r for r in read_csv_dicts(CSV_FILES["contracts"])}
+            for cp in cp_rows:
+                contract_id = cp.get("contract_id", "")
+                base = {
+                    "customer_name": cp.get("customer_name", ""),
+                    "customer_project_id": cp.get("customer_project_id", ""),
+                    "project_name": cp.get("project_name", ""),
+                    "product_type": cp.get("product_type", ""),
+                    "contract_id": contract_id,
+                    "contract_no": ct_map.get(contract_id, {}).get("bosch_contract_no", ""),
+                }
+                for m in range(1, 13):
+                    key = (cp.get("customer_project_id"), contract_id, f"{m:02d}")
+                    p = plan_map.get(key, {})
+                    a = actual_map.get(key, {})
+                    base[f"plan_{m:02d}"] = p.get("plan_amount", "")
+                    base[f"must_{m:02d}"] = p.get("plan_must_billing_amount", "")
+                    base[f"actual_{m:02d}"] = a.get("actual_amount", "")
+                rows.append(base)
+            return self._send_json(200, {"year": year, "rows": rows})
+
+        if path == "/api/ops/cm/billing/summary":
+            ensure_plan_generated_tasks()
+            tasks = read_csv_dicts(CSV_FILES["billing_tasks"])
+            month_now = datetime.utcnow().strftime("%m")
+            year_now = datetime.utcnow().strftime("%Y")
+            month_tasks = [t for t in tasks if t.get("year") == year_now and t.get("month") == month_now]
+            pending = [t for t in month_tasks if t.get("status_code") not in {"closed", "partial_closed"}]
+            completed = [t for t in month_tasks if t.get("status_code") in {"closed", "partial_closed"}]
+            amount = sum(float((t.get("plan_amount") or "0")) for t in pending)
+            return self._send_json(
+                200,
+                {
+                    "month_task_count": len(pending),
+                    "month_task_amount": round(amount, 2),
+                    "month_completed_count": len(completed),
+                },
+            )
+
+        if path == "/api/ops/cm/billing/calendar":
+            ensure_plan_generated_tasks()
+            year = query.get("year", [datetime.utcnow().strftime("%Y")])[0]
+            plans = [r for r in read_csv_dicts(CSV_FILES["contract_monthly_plans"]) if r.get("year") == year]
+            actuals = [r for r in read_csv_dicts(CSV_FILES["contract_monthly_actuals"]) if r.get("year") == year]
+            cp_map = {r.get("customer_project_id"): r for r in read_csv_dicts(CSV_FILES["customer_projects"])}
+            ct_map = {r.get("contract_id"): r for r in read_csv_dicts(CSV_FILES["contracts"])}
+            groups: dict[str, dict[str, list[dict[str, str]]]] = {}
+            for p in plans:
+                cp = cp_map.get(p.get("customer_project_id"), {})
+                key = cp.get("customer_name", "Unknown")
+                month = p.get("month", "")
+                row = {
+                    "customer_project_id": p.get("customer_project_id", ""),
+                    "project_name": cp.get("project_name", ""),
+                    "product_type": cp.get("product_type", ""),
+                    "contract_no": ct_map.get(p.get("contract_id"), {}).get("bosch_contract_no", ""),
+                    "plan_amount": p.get("plan_amount", "0"),
+                    "actual_amount": "0",
+                    "deficit": "0",
+                }
+                act = next(
+                    (
+                        a
+                        for a in actuals
+                        if a.get("customer_project_id") == p.get("customer_project_id")
+                        and a.get("contract_id") == p.get("contract_id")
+                        and a.get("month") == month
+                    ),
+                    {},
+                )
+                row["actual_amount"] = act.get("actual_amount", "0")
+                deficit = float(row["plan_amount"] or 0) - float(row["actual_amount"] or 0)
+                row["deficit"] = str(round(deficit, 2) if deficit > 0 else 0)
+                groups.setdefault(key, {}).setdefault(month, []).append(row)
+            return self._send_json(200, {"year": year, "groups": groups})
+
+        if path == "/api/ops/cm/billing/tasks":
+            ensure_plan_generated_tasks()
+            rows = read_csv_dicts(CSV_FILES["billing_tasks"])
+            status = query.get("status", [""])[0].strip()
+            customer = query.get("customer", [""])[0].strip()
+            contract = query.get("contract", [""])[0].strip()
+            source = query.get("source", [""])[0].strip()
+            must = query.get("must_billing", [""])[0].strip()
+
+            def match(r: dict[str, str]) -> bool:
+                if status and r.get("status_code") != status:
+                    return False
+                if customer and not contains(r.get("customer_name", ""), customer):
+                    return False
+                if contract and not contains(r.get("contract_no", ""), contract):
+                    return False
+                if source and r.get("source_type") != source:
+                    return False
+                if must and r.get("must_billing_flag") != must:
+                    return False
+                return True
+
+            out = sorted([r for r in rows if match(r)], key=lambda x: x.get("updated_at", ""), reverse=True)
+            return self._send_json(200, out)
+
+        if path == "/api/ops/cm/billing/tasks/detail":
+            task_id = query.get("task_id", [""])[0].strip()
+            rows = read_csv_dicts(CSV_FILES["billing_tasks"])
+            row = next((r for r in rows if r.get("billing_task_id") == task_id), {})
+            if not row:
+                return self._send_json(200, {})
+            row = dict(row)
+            row["invoice_lines"] = parse_invoice_lines(row.get("invoice_lines_json", "[]"))
+            row["status_idx"] = status_idx(row.get("status_code", "planned"))
+            row["status_flow"] = BILLING_STATUS_FLOW
+            return self._send_json(200, row)
 
         if path == "/api/plan/contracts":
             rows = [r for r in read_csv_dicts(CSV_FILES["planning_records"]) if r["planning_type"] == "contract"]
@@ -834,6 +1052,183 @@ class Handler(BaseHTTPRequestHandler):
             write_case_rows(rows)
             append_workflow_event(case_id, action, row.get("execution_status", ""), "CM", event_comment)
             return self._send_json(200, {"ok": True, "contract_case_id": case_id, "execution_status": row.get("execution_status", "")})
+
+        if path == "/api/cm/billing/plan-upload":
+            payload_rows = payload.get("rows", [])
+            year = str(payload.get("year", datetime.utcnow().strftime("%Y")))
+            plans = read_csv_dicts(CSV_FILES["contract_monthly_plans"])
+            if not plans:
+                return self._send_json(500, {"ok": False, "message": "contract_monthly_plans seed missing"})
+            plans = [r for r in plans if not (r.get("year") == year and r.get("source", "manual_upload") == "manual_upload")]
+            for i, row in enumerate(payload_rows):
+                plans.append(
+                    {
+                        "plan_row_id": f"PLN-{year}-{i+1:04d}",
+                        "customer_project_id": row.get("customer_project_id", ""),
+                        "contract_id": row.get("contract_id", ""),
+                        "year": year,
+                        "month": str(row.get("month", "")).zfill(2),
+                        "plan_amount": str(row.get("plan_amount", "0")),
+                        "plan_must_billing_amount": str(row.get("plan_must_billing_amount", "0")),
+                        "version": row.get("version", f"{year}-CF05"),
+                        "source": "manual_upload",
+                        "updated_at": now_iso(),
+                    }
+                )
+            write_csv_atomic(CSV_FILES["contract_monthly_plans"], plans, list(plans[0].keys()))
+            ensure_plan_generated_tasks()
+            return self._send_json(201, {"ok": True, "imported": len(payload_rows)})
+
+        if path == "/api/ops/cm/billing/tasks":
+            rows = read_csv_dicts(CSV_FILES["billing_tasks"])
+            cp_map = {r.get("customer_project_id"): r for r in read_csv_dicts(CSV_FILES["customer_projects"])}
+            ct_map = {r.get("contract_id"): r for r in read_csv_dicts(CSV_FILES["contracts"])}
+            task_id = payload.get("billing_task_id", f"BT-MAN-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}")
+            cp_id = payload.get("customer_project_id", "")
+            contract_id = payload.get("contract_id", "")
+            cp = cp_map.get(cp_id, {})
+            ct = ct_map.get(contract_id, {})
+            row = {
+                "billing_task_id": task_id,
+                "source_type": payload.get("source_type", "cm_manual"),
+                "status_code": "planned",
+                "status_label": "计划开票",
+                "customer_id": cp.get("customer_id", payload.get("customer_id", "")),
+                "customer_name": cp.get("customer_name", payload.get("customer_name", "")),
+                "customer_project_id": cp_id,
+                "project_name": cp.get("project_name", payload.get("project_name", "")),
+                "product_type": cp.get("product_type", payload.get("product_type", "")),
+                "contract_id": contract_id,
+                "contract_no": ct.get("bosch_contract_no", payload.get("contract_no", "")),
+                "year": str(payload.get("year", datetime.utcnow().strftime("%Y"))),
+                "month": str(payload.get("month", datetime.utcnow().strftime("%m"))).zfill(2),
+                "plan_amount": str(payload.get("plan_amount", "0")),
+                "plan_must_billing_amount": str(payload.get("plan_must_billing_amount", "0")),
+                "actual_amount": "0",
+                "actual_must_billing_amount": "0",
+                "must_billing_flag": "1" if float(payload.get("plan_must_billing_amount", "0") or 0) > 0 else "0",
+                "owner_role": "CM",
+                "current_owner": "CM",
+                "next_step": BILLING_STATUS_FLOW[1],
+                "locked_anchor": "0",
+                "workon_no": "",
+                "total_invoice_amount": "",
+                "invoice_lines_json": "[]",
+                "close_type": "",
+                "partial_reason": "",
+                "completion_time_s0": "",
+                "completion_time_s1": "",
+                "completion_time_s2": "",
+                "completion_time_s3": "",
+                "completion_time_s4": "",
+                "created_at": now_iso(),
+                "updated_at": now_iso(),
+            }
+            rows.append(row)
+            write_csv_atomic(CSV_FILES["billing_tasks"], rows, list(rows[0].keys()))
+            return self._send_json(201, {"ok": True, "billing_task_id": task_id})
+
+        if path == "/api/ops/cm/billing/tasks/progress":
+            task_id = payload.get("billing_task_id", "")
+            target_status = payload.get("target_status", "")
+            completion_time = payload.get("completion_time", now_iso())
+            rows = read_csv_dicts(CSV_FILES["billing_tasks"])
+            idx = next((i for i, r in enumerate(rows) if r.get("billing_task_id") == task_id), -1)
+            if idx < 0:
+                return self._send_json(404, {"ok": False, "message": "task not found"})
+            row = rows[idx]
+            row["status_code"] = target_status or row.get("status_code", "planned")
+            row["status_label"] = BILLING_STATUS_FLOW[min(status_idx(row["status_code"]), len(BILLING_STATUS_FLOW) - 1)]
+            row["next_step"] = BILLING_STATUS_FLOW[min(status_idx(row["status_code"]) + 1, len(BILLING_STATUS_FLOW) - 1)]
+            row[f"completion_time_s{status_idx(row['status_code'])}"] = completion_time
+            row["updated_at"] = now_iso()
+            rows[idx] = row
+            write_csv_atomic(CSV_FILES["billing_tasks"], rows, list(rows[0].keys()))
+            return self._send_json(200, {"ok": True, "billing_task_id": task_id, "status_code": row["status_code"]})
+
+        if path == "/api/ops/cm/billing/tasks/close":
+            task_id = payload.get("billing_task_id", "")
+            close_type = payload.get("close_type", "closed")
+            workon_no = payload.get("workon_no", "").strip()
+            total_invoice_amount = str(payload.get("total_invoice_amount", "")).strip()
+            invoice_lines = payload.get("invoice_lines", [])
+            rows = read_csv_dicts(CSV_FILES["billing_tasks"])
+            idx = next((i for i, r in enumerate(rows) if r.get("billing_task_id") == task_id), -1)
+            if idx < 0:
+                return self._send_json(404, {"ok": False, "message": "task not found"})
+            row = rows[idx]
+            if row.get("status_code") not in {"declaration_booked", "closed", "partial_closed"}:
+                return self._send_json(400, {"ok": False, "message": "only step4 task can close"})
+            if not workon_no or not total_invoice_amount:
+                return self._send_json(400, {"ok": False, "message": "workon_no and total_invoice_amount required"})
+
+            row["workon_no"] = workon_no
+            row["total_invoice_amount"] = total_invoice_amount
+            row["invoice_lines_json"] = json.dumps(invoice_lines, ensure_ascii=False)
+            row["actual_amount"] = total_invoice_amount
+            row["actual_must_billing_amount"] = str(payload.get("actual_must_billing_amount", row.get("plan_must_billing_amount", "0")))
+            row["close_type"] = close_type
+            row["partial_reason"] = payload.get("partial_reason", "").strip()
+            row["status_code"] = "partial_closed" if close_type == "partial_closed" else "closed"
+            row["status_label"] = "部分关闭" if close_type == "partial_closed" else "关闭"
+            row["next_step"] = "-"
+            row["completion_time_s4"] = payload.get("completion_time", now_iso())
+            row["updated_at"] = now_iso()
+            rows[idx] = row
+            write_csv_atomic(CSV_FILES["billing_tasks"], rows, list(rows[0].keys()))
+
+            actuals = read_csv_dicts(CSV_FILES["contract_monthly_actuals"])
+            key = (
+                row.get("customer_project_id"),
+                row.get("contract_id"),
+                row.get("year"),
+                row.get("month"),
+                row.get("source_type", "task"),
+            )
+            found = next(
+                (
+                    i
+                    for i, a in enumerate(actuals)
+                    if (
+                        a.get("customer_project_id"),
+                        a.get("contract_id"),
+                        a.get("year"),
+                        a.get("month"),
+                        a.get("source", "task"),
+                    )
+                    == key
+                ),
+                -1,
+            )
+            actual_payload = {
+                "actual_row_id": f"ACT-{row.get('year')}{row.get('month')}-{row.get('contract_id', '')[-3:]}",
+                "customer_project_id": row.get("customer_project_id", ""),
+                "contract_id": row.get("contract_id", ""),
+                "year": row.get("year", ""),
+                "month": row.get("month", ""),
+                "actual_amount": row.get("actual_amount", "0"),
+                "actual_must_billing_amount": row.get("actual_must_billing_amount", "0"),
+                "version": f"{row.get('year', '')}-CF05",
+                "source": row.get("source_type", "task"),
+                "updated_at": now_iso(),
+            }
+            if found >= 0:
+                actuals[found] = actual_payload
+            else:
+                actuals.append(actual_payload)
+            write_csv_atomic(CSV_FILES["contract_monthly_actuals"], actuals, list(actuals[0].keys()))
+
+            append_csv_row(
+                CSV_FILES["billing_events"],
+                {
+                    "billing_event_id": f"BE-TASK-{task_id}",
+                    "billing_date": datetime.utcnow().strftime("%Y-%m-%d"),
+                    "amount": row.get("actual_amount", "0"),
+                    "allocation_status": "task_closed" if close_type != "partial_closed" else "task_partial_closed",
+                    "linked_contract_case_ids": row.get("contract_id", ""),
+                },
+            )
+            return self._send_json(200, {"ok": True, "billing_task_id": task_id, "close_type": row["close_type"]})
 
         if path == "/api/ops/billing/execution":
             now = datetime.utcnow().isoformat(timespec="seconds")

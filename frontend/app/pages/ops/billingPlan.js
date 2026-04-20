@@ -1,7 +1,6 @@
-import { makeListPage } from "../pageFactories.js";
+import calendarPage from "./billingCalendar.js";
 
-export default makeListPage({
-  title: "开票计划",
-  taskHint: "以月度节奏维护计划，确保与执行一致。",
-  api: "/api/ops/billing/plan",
-});
+export default {
+  ...calendarPage,
+  title: "开票计划日历",
+};

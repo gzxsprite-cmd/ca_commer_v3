@@ -15,6 +15,7 @@ export default {
   type: "角色首页",
   async render() {
     const summary = await fetchJson("/api/ops/cm/home-summary", { recent_items: [] });
+    const billing = await fetchJson("/api/ops/cm/billing/summary", {});
     const cards = cmStatusCards.map((c) => ({
       title: c.title,
       value: summary[c.key] ?? 0,
@@ -25,6 +26,15 @@ export default {
     return `
       ${renderTaskBar("先处理待CM确认/待CM归档，再处理寄出与异常闭环。")}
       <div id="cm-home-cards">${renderCards(cards)}</div>
+      <section class="focus-panel" style="margin-top:10px;">
+        <h3>本月开票提醒</h3>
+        <div class="form-grid">
+          <div><strong>本月开票事项数：</strong>${billing.month_task_count ?? 0}</div>
+          <div><strong>本月开票事项金额：</strong>${billing.month_task_amount ?? 0}</div>
+          <div><strong>本月已完成事项数：</strong>${billing.month_completed_count ?? 0}</div>
+        </div>
+        <div class="actions"><button id="goto-billing-tasks">进入开票事项</button></div>
+      </section>
     `;
   },
   bind() {
@@ -35,5 +45,7 @@ export default {
         location.hash = `/ops/contracts/tracking?status=${encodeURIComponent(key)}`;
       };
     });
+    const btn = document.getElementById("goto-billing-tasks");
+    if (btn) btn.onclick = () => (location.hash = "/ops/billing/tasks");
   },
 };
