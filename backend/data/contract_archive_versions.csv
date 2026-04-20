@@ -1,0 +1,9 @@
+version_id,contract_case_id,version_type,version_label,file_url
+DOC-0001-DRAFT,DMY-20260410-0001,draft,草拟版,/assets/contracts/draft_sample.pdf
+DOC-0002-DRAFT,DMY-20260410-0002,draft,草拟版,/assets/contracts/draft_sample.pdf
+DOC-0003-DRAFT,DMY-20260410-0003,draft,草拟版,/assets/contracts/draft_sample.pdf
+DOC-0004-DRAFT,DMY-20260410-0004,draft,草拟版,/assets/contracts/draft_sample.pdf
+DOC-0005-DRAFT,DMY-20260410-0005,draft,草拟版,/assets/contracts/draft_sample.pdf
+DOC-0006-DRAFT,DMY-20260410-0006,draft,草拟版,/assets/contracts/draft_sample.pdf
+ARV-002,DMY-20260410-0006,single_sign,单签版,/assets/contracts/single_sign_sample.pdf
+ARV-003,DMY-20260410-0006,double_sign,双签版,/assets/contracts/double_sign_sample.pdf
