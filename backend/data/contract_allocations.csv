@@ -1,0 +1,13 @@
+allocation_id,contract_case_id,target_type,target_id,target_name,allocated_amount,currency,source_note
+AL-0001-01,DMY-20260410-0001,project,PMS-001,PMS-001,120000,CNY,migrated_from_allocation_summary
+AL-0001-02,DMY-20260410-0001,buffer,BUFFER,BUFFER,0,CNY,migrated_from_allocation_summary
+AL-0002-01,DMY-20260410-0002,project,PMS-002,PMS-002,90000,CNY,migrated_from_allocation_summary
+AL-0002-02,DMY-20260410-0002,buffer,BUFFER,BUFFER,0,CNY,migrated_from_allocation_summary
+AL-0003-01,DMY-20260410-0003,project,PMS-003,PMS-003,150000,CNY,migrated_from_allocation_summary
+AL-0003-02,DMY-20260410-0003,buffer,BUFFER,BUFFER,0,CNY,migrated_from_allocation_summary
+AL-0004-01,DMY-20260410-0004,project,PMS-004,PMS-004,110000,CNY,migrated_from_allocation_summary
+AL-0004-02,DMY-20260410-0004,buffer,BUFFER,BUFFER,0,CNY,migrated_from_allocation_summary
+AL-0005-01,DMY-20260410-0005,project,PMS-005,PMS-005,130000,CNY,migrated_from_allocation_summary
+AL-0005-02,DMY-20260410-0005,buffer,BUFFER,BUFFER,0,CNY,migrated_from_allocation_summary
+AL-0006-01,DMY-20260410-0006,project,PMS-006,PMS-006,175000,CNY,migrated_from_allocation_summary
+AL-0006-02,DMY-20260410-0006,buffer,BUFFER,BUFFER,0,CNY,migrated_from_allocation_summary
