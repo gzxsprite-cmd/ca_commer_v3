@@ -1,0 +1,2 @@
+adjustment_id,scope_key,adjustment_reason,delta_value,adjustment_status,proposed_by_role
+ADJ-001,portfolio,Billing shifted by customer request,-15000,adjustment_in_assessment,SCP
