@@ -365,3 +365,91 @@ button.secondary {
 .text-muted {
   color: var(--muted);
 }
+
+.matrix-page { padding: 14px; }
+.matrix-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.matrix-actions { margin-top: 0; }
+.import-inline {
+  border: 1px dashed #c7d8ff;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fbff;
+  margin-bottom: 10px;
+}
+.matrix-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 220px)) auto;
+  gap: 10px;
+  align-items: end;
+  margin: 8px 0 12px;
+}
+.matrix-filters label {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.matrix-filters .matrix-search { min-width: 220px; }
+.matrix-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-height: 68vh;
+  overflow: auto;
+}
+.matrix-table {
+  min-width: 1720px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.matrix-table th, .matrix-table td {
+  white-space: nowrap;
+  border-bottom: 1px solid #e6edf7;
+  padding: 10px 10px;
+  background: #fff;
+}
+.matrix-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #f8fbff;
+}
+.month-col { text-align: center; min-width: 110px; }
+.month-tag {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.month-actual .month-tag { background: #eef2ff; color: #384a8b; }
+.month-plan .month-tag { background: #eafaf1; color: #17603c; }
+.month-actual-cell { color: #475569; background: #fafcff !important; }
+.month-plan-cell { background: #ffffff; }
+.amount-cell { text-align: right; font-variant-numeric: tabular-nums; }
+.plan-input {
+  width: 100%;
+  min-width: 90px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 8px;
+}
+.sticky-col {
+  position: sticky;
+  z-index: 4;
+  background: #fff !important;
+  border-right: 1px solid #edf2fb;
+}
+.matrix-table thead .sticky-col { z-index: 7; background: #f4f8ff !important; }
+.sc-0 { left: 0; }
+.sc-1 { left: 140px; }
+.sc-2 { left: 320px; }
+.sc-3 { left: 450px; }
+.sc-4 { left: 620px; }
+.sc-5 { left: 760px; }

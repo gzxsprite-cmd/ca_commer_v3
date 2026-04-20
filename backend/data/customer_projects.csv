@@ -1,4 +1,4 @@
-customer_project_id,customer_id,customer_name,project_name,product_type,contract_id
-CP-001,CUST-001,Northwind,Alpha Program,Brake ECU,CT-001
-CP-002,CUST-002,Contoso,Beta Program,Smart Sensor,CT-002
-CP-003,CUST-003,Fabrikam,Gamma Program,Domain Controller,CT-003
+customer_project_id,customer_id,customer_name,project_name,product_type,contract_id,otp_lifetime_amount,otp_target_amount
+CP-001,CUST-001,Northwind,Alpha Program,Brake ECU,CT-001,980000,120000
+CP-002,CUST-002,Contoso,Beta Program,Smart Sensor,CT-002,760000,85000
+CP-003,CUST-003,Fabrikam,Gamma Program,Domain Controller,CT-003,1120000,154000

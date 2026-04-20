@@ -12,8 +12,8 @@ ops_receivables,应收账款,ops,/ops/receivables/balances,9,1
 ops_billing_plan,开票计划,ops,/ops/billing/plan,10,1
 plan_scp_home,SCP 计划首页,plan,/plan/scp/home,1,1
 plan_ca_home,CA 管理首页,plan,/plan/ca/home,2,1
-plan_contracts,合同计划,plan,/plan/contracts,3,1
-plan_billing,开票计划复盘,plan,/plan/billing,4,1
+plan_contracts,合同计划,plan,/plan/contracts,3,0
+plan_billing,月度开票计划,plan,/plan/billing,4,1
 plan_targets,目标分解,plan,/plan/targets,5,1
 plan_coverage,成本覆盖,plan,/plan/cost-coverage,6,1
 plan_adjustments,调整申请,plan,/plan/adjustments,7,1

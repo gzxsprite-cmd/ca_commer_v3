@@ -39,7 +39,7 @@ plan_ca_home,SCP,0
 plan_ca_home,CM,0
 plan_ca_home,CA,1
 plan_contracts,SCP,1
-plan_contracts,CM,1
+plan_contracts,CM,0
 plan_contracts,CA,1
 plan_billing,SCP,1
 plan_billing,CM,1

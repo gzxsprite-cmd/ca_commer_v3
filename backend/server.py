@@ -605,6 +605,9 @@ class Handler(BaseHTTPRequestHandler):
             year = query.get("year", [datetime.utcnow().strftime("%Y")])[0]
             plans = [r for r in read_csv_dicts(CSV_FILES["contract_monthly_plans"]) if r.get("year") == year]
             actuals = [r for r in read_csv_dicts(CSV_FILES["contract_monthly_actuals"]) if r.get("year") == year]
+            billing_plan_rows = read_csv_dicts(CSV_FILES["billing_plans"])
+            period_key = datetime.utcnow().strftime("%Y-%m")
+            published_exists = any(r.get("period_key") == period_key and r.get("plan_status") == "published_final" for r in billing_plan_rows)
             rows = []
             plan_map = {(r.get("customer_project_id"), r.get("contract_id"), r.get("month")): r for r in plans}
             actual_map = {(r.get("customer_project_id"), r.get("contract_id"), r.get("month")): r for r in actuals}
@@ -619,6 +622,8 @@ class Handler(BaseHTTPRequestHandler):
                     "product_type": cp.get("product_type", ""),
                     "contract_id": contract_id,
                     "contract_no": ct_map.get(contract_id, {}).get("bosch_contract_no", ""),
+                    "otp_lifetime": cp.get("otp_lifetime_amount", ""),
+                    "otp_target": cp.get("otp_target_amount", ""),
                 }
                 for m in range(1, 13):
                     key = (cp.get("customer_project_id"), contract_id, f"{m:02d}")
@@ -628,7 +633,7 @@ class Handler(BaseHTTPRequestHandler):
                     base[f"must_{m:02d}"] = p.get("plan_must_billing_amount", "")
                     base[f"actual_{m:02d}"] = a.get("actual_amount", "")
                 rows.append(base)
-            return self._send_json(200, {"year": year, "rows": rows})
+            return self._send_json(200, {"year": year, "rows": rows, "publish_meta": {"period_key": period_key, "exists": published_exists}})
 
         if path == "/api/ops/cm/billing/summary":
             ensure_plan_generated_tasks()
@@ -1078,6 +1083,69 @@ class Handler(BaseHTTPRequestHandler):
             write_csv_atomic(CSV_FILES["contract_monthly_plans"], plans, list(plans[0].keys()))
             ensure_plan_generated_tasks()
             return self._send_json(201, {"ok": True, "imported": len(payload_rows)})
+
+        if path == "/api/cm/billing/plan-publish":
+            year = str(payload.get("year", datetime.utcnow().strftime("%Y")))
+            period_key = payload.get("period_key", datetime.utcnow().strftime("%Y-%m"))
+            month_now = int(datetime.utcnow().strftime("%m"))
+            payload_rows = payload.get("rows", [])
+            now = now_iso()
+
+            plans = read_csv_dicts(CSV_FILES["contract_monthly_plans"])
+            if not plans:
+                return self._send_json(500, {"ok": False, "message": "contract_monthly_plans seed missing"})
+
+            plan_index = {(r.get("customer_project_id"), r.get("contract_id"), r.get("year"), r.get("month")): i for i, r in enumerate(plans)}
+            for row in payload_rows:
+                cp_id = row.get("customer_project_id", "")
+                contract_id = row.get("contract_id", "")
+                monthly = row.get("plan_by_month", {})
+                for m in range(month_now, 13):
+                    month = f"{m:02d}"
+                    key = (cp_id, contract_id, year, month)
+                    amount = str(monthly.get(month, "0"))
+                    must_amount = amount
+                    if key in plan_index:
+                        idx = plan_index[key]
+                        plans[idx]["plan_amount"] = amount
+                        plans[idx]["plan_must_billing_amount"] = must_amount
+                        plans[idx]["version"] = period_key
+                        plans[idx]["source"] = "cm_published"
+                        plans[idx]["updated_at"] = now
+                    else:
+                        new_row = {
+                            "plan_row_id": f"PLN-{year}-{cp_id}-{contract_id}-{month}",
+                            "customer_project_id": cp_id,
+                            "contract_id": contract_id,
+                            "year": year,
+                            "month": month,
+                            "plan_amount": amount,
+                            "plan_must_billing_amount": must_amount,
+                            "version": period_key,
+                            "source": "cm_published",
+                            "updated_at": now,
+                        }
+                        plans.append(new_row)
+                        plan_index[key] = len(plans) - 1
+
+            write_csv_atomic(CSV_FILES["contract_monthly_plans"], plans, list(plans[0].keys()))
+
+            billing_rows = read_csv_dicts(CSV_FILES["billing_plans"])
+            existed = any(r.get("period_key") == period_key and r.get("plan_status") == "published_final" for r in billing_rows)
+            billing_rows = [r for r in billing_rows if not (r.get("period_key") == period_key and r.get("plan_status") == "published_final")]
+            for i, row in enumerate(payload_rows):
+                billing_rows.append(
+                    {
+                        "billing_plan_id": f"BP-{period_key.replace('-', '')}-{i+1:04d}",
+                        "period_key": period_key,
+                        "contract_case_id": f"{row.get('customer_project_id', '')}|{row.get('contract_id', '')}",
+                        "planned_amount": str(row.get("total_plan_amount", "0")),
+                        "plan_status": "published_final",
+                    }
+                )
+            write_csv_atomic(CSV_FILES["billing_plans"], billing_rows, list(billing_rows[0].keys()))
+            ensure_plan_generated_tasks()
+            return self._send_json(200, {"ok": True, "period_key": period_key, "mode": "overwrite" if existed else "first_publish"})
 
         if path == "/api/ops/cm/billing/tasks":
             rows = read_csv_dicts(CSV_FILES["billing_tasks"])
