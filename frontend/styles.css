@@ -374,7 +374,12 @@ button.secondary {
   margin-bottom: 10px;
 }
 
-.matrix-page { padding: 14px; }
+.matrix-page {
+  padding: 14px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
 .matrix-header {
   display: flex;
   justify-content: space-between;
@@ -409,10 +414,15 @@ button.secondary {
   border: 1px solid var(--border);
   border-radius: 10px;
   max-height: 68vh;
-  overflow: auto;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 .matrix-table {
-  min-width: 1720px;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
   border-collapse: separate;
   border-spacing: 0;
 }
