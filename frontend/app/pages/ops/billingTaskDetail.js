@@ -30,6 +30,19 @@ function subNav() {
   </div>`;
 }
 
+function stepIndexFromStatus(statusCode) {
+  const mapping = {
+    planned: 0,
+    customer_confirmed: 1,
+    rb_mapped: 2,
+    settlement_adjusted: 3,
+    declaration_booked: 4,
+    closed: 5,
+    partial_closed: 5,
+  };
+  return mapping[statusCode] ?? 0;
+}
+
 export default {
   title: "开票跟进｜开票事项详情",
   type: "详情/执行",
@@ -118,6 +131,27 @@ export default {
       return flow[Math.min(idx + 1, flow.length - 2)];
     };
 
+    const syncStepUi = (statusCode) => {
+      const statusBadge = document.getElementById("detail-status-badge");
+      if (statusBadge) {
+        statusBadge.className = `badge ${billingBadgeClass(statusCode)}`;
+        statusBadge.textContent = billingStepLabel(statusCode, "");
+      }
+
+      const stepIdx = stepIndexFromStatus(statusCode);
+      const chips = document.getElementById("detail-step-chips");
+      if (chips) {
+        chips.innerHTML = flowCn
+          .map((n, idx) => `<span class="badge ${idx <= stepIdx ? "status-info" : "status-neutral"}">${n}</span>`)
+          .join(" ");
+      }
+
+      if (stepIdx >= 4) {
+        const panel = document.getElementById("step4-panel");
+        if (panel) panel.style.display = "block";
+      }
+    };
+
     document.getElementById("go-next").onclick = async () => {
       const status = (await fetchJson(`/api/ops/cm/billing/tasks/detail?task_id=${encodeURIComponent(id)}`, {})).status_code;
       const target = statusToNext(status || "planned");
@@ -126,16 +160,10 @@ export default {
         target_status: target,
         completion_time: document.getElementById("done-time").value,
       });
-      const statusBadge = document.getElementById("detail-status-badge");
-      if (statusBadge) {
-        statusBadge.className = `badge ${billingBadgeClass(target)}`;
-        statusBadge.textContent = billingStepLabel(target, "");
-      }
-      if (target === "declaration_booked") {
-        const panel = document.getElementById("step4-panel");
-        if (panel) panel.style.display = "block";
-      }
-      document.getElementById("progress-msg").textContent = `已推进到 ${billingStepLabel(target, "")}`;
+      const latest = await fetchJson(`/api/ops/cm/billing/tasks/detail?task_id=${encodeURIComponent(id)}`, {});
+      const canonicalStatus = latest.status_code || target;
+      syncStepUi(canonicalStatus);
+      document.getElementById("progress-msg").textContent = `已推进到 ${billingStepLabel(canonicalStatus, "")}`;
     };
 
     const close = async (partial) => {
